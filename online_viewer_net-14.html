@@ -203,7 +203,6 @@
       <button id="nextMonth">&#8594;</button>
     </div>
     <div class="calendar-grid" id="calendarGrid"></div>
-    <ul class="event-list" id="eventList"></ul>
   </div>
 
   <div id="loadingOverlay" aria-live="polite" aria-busy="true" role="alert">
@@ -241,35 +240,25 @@
         return y && m && d ? `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` : null;
       }
 
-function formatTime12h(timeStr) {
-  if (!timeStr || typeof timeStr !== 'string') return "";
-
-  // Remove seconds if present (e.g., "4:00:00 PM" → "4:00 PM", "16:00:00" → "16:00")
-  timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, '$1');
-
-  // Already in AM/PM format
-  if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) {
-    return timeStr.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1');
-  }
-
-  // Convert 24h to 12h
-  const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return timeStr;
-
-  let [_, hourStr, minuteStr] = match;
-  let hour = parseInt(hourStr, 10);
-  const minute = minuteStr;
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12;
-  if (hour === 0) hour = 12;
-  return `${hour}:${minute} ${ampm}`;
-}
-
-
-
+      function formatTime12h(timeStr) {
+        if (!timeStr || typeof timeStr !== 'string') return "";
+        timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, '$1');
+        if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) {
+          return timeStr.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1');
+        }
+        const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match) return timeStr;
+        let [_, hourStr, minuteStr] = match;
+        let hour = parseInt(hourStr, 10);
+        const minute = minuteStr;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        hour = hour % 12;
+        if (hour === 0) hour = 12;
+        return `${hour}:${minute} ${ampm}`;
+      }
 
       async function geocodeAddress(address) {
-        if (address in markerMap) return markerMap[address]; // shortcut to cached
+        if (address in markerMap) return markerMap[address];
         try {
           const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`);
           const res = await fetch(url);
@@ -316,10 +305,7 @@ function formatTime12h(timeStr) {
 
       function buildCalendar(year, month) {
         calendarGrid.innerHTML = '';
-        eventList.innerHTML = '';
         selectedDayEl = null;
-        eventList.classList.remove('visible');
-
         const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         dayLabels.forEach(label => {
           const labelEl = document.createElement('div');
@@ -338,12 +324,10 @@ function formatTime12h(timeStr) {
         }
 
         const today = new Date();
-
         for (let day = 1; day <= daysInMonth; day++) {
           const cell = document.createElement('div');
           cell.className = 'day';
           cell.textContent = day;
-
           const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
           if (isToday) cell.classList.add('today');
 
@@ -355,31 +339,6 @@ function formatTime12h(timeStr) {
 
             const clicked = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const matches = events.filter(e => e.date === clicked);
-            if (matches.length) {
-              eventList.innerHTML = '';
-              for (const e of matches) {
-                const timeFormatted = e.time ? formatTime12h(e.time) : "";
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${e.name}</strong><br><small>${timeFormatted ? timeFormatted + " — " : ""}${e.address}</small>`;
-                const key = `${e.name}__${e.address}`;
-                li.onclick = () => {
-                  const marker = markerMap[key];
-                  if (marker) {
-                    map.flyTo(defaultCenter, defaultZoom, { animate: true, duration: 1.5 });
-                    setTimeout(() => {
-                      map.flyTo(marker.getLatLng(), 15, { animate: true, duration: 2 });
-                      marker.openPopup();
-                    }, 1600);
-                  }
-                };
-                eventList.appendChild(li);
-              }
-              eventList.classList.add('visible');
-            } else {
-              eventList.innerHTML = '<li>No events on this date.</li>';
-              eventList.classList.add('visible');
-            }
-
             await showEventsOnMap(matches);
             loadingOverlay.style.display = 'none';
           };
