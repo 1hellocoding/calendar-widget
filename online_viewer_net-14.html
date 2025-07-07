@@ -7,7 +7,8 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
-      margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Segoe UI', sans-serif;
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      font-family: 'Segoe UI', sans-serif;
       background: #f9f9f9;
     }
     #map {
@@ -15,13 +16,13 @@
       width: 100vw;
       position: relative;
       z-index: 0;
+      touch-action: none; /* Disable map gestures on mobile */
     }
     .calendar {
       position: absolute;
       top: 20px;
       left: 20px;
       width: 360px;
-      height: 560px;
       background: white;
       padding: 20px;
       border-radius: 16px;
@@ -29,24 +30,27 @@
       z-index: 10000;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+      overflow: visible;
+      height: auto;
     }
 
-    /* Mobile styles */
     @media (max-width: 480px) {
       .calendar {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100vw;
-        height: 40vh;
-        border-radius: 16px 16px 0 0;
-        padding: 15px 20px 10px 20px;
-        box-shadow: 0 -8px 20px rgba(0,0,0,0.1);
-        overflow-y: auto;
+        bottom: auto;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        height: auto;
+        max-height: 80vh;
+        border-radius: 16px;
+        padding: 15px 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        overflow: visible;
       }
       #map {
-        height: 60vh;
+        height: 100vh;
       }
       .calendar-header {
         font-size: 1.2em;
@@ -59,9 +63,6 @@
       .day {
         padding: 8px 0;
         font-size: 0.85em;
-      }
-      .event-list.visible {
-        max-height: 180px;
       }
       .calendar-header button {
         font-size: 1.8em;
@@ -97,9 +98,6 @@
       gap: 8px;
       margin-bottom: 16px;
     }
-    .calendar-grid div:first-child:nth-last-child(n+29):nth-last-child(-n+35) {
-      grid-column: span 7;
-    }
     .calendar-grid .day-label {
       text-align: center;
       font-size: 0.85em;
@@ -133,36 +131,6 @@
     }
     .day.today {
       border: 2px solid #3b82f6;
-    }
-    .event-list {
-      margin-top: auto;
-      max-height: 0;
-      overflow: hidden;
-      flex-grow: 0;
-      border-top: 1px solid #ddd;
-      padding: 0 15px;
-      opacity: 0;
-      transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
-      list-style: none;
-    }
-    .event-list.visible {
-      max-height: 300px;
-      padding: 10px 15px;
-      flex-grow: 1;
-      opacity: 1;
-      overflow-y: auto;
-    }
-    .event-list li {
-      padding: 8px 12px;
-      border-bottom: 1px solid #ddd;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: background 0.3s ease;
-      white-space: normal;
-      overflow-wrap: break-word;
-    }
-    .event-list li:hover {
-      background-color: #e0e7ff;
     }
 
     #loadingOverlay {
@@ -205,8 +173,8 @@
     <div class="calendar-grid" id="calendarGrid"></div>
   </div>
 
-  <div id="loadingOverlay" aria-live="polite" aria-busy="true" role="alert">
-    <svg id="loadingGuitar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="Loading microphone icon" role="img" >
+  <div id="loadingOverlay">
+    <svg id="loadingGuitar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
       <rect x="22" y="12" width="20" height="30" rx="10" ry="10" />
       <rect x="27" y="42" width="10" height="8" />
       <line x1="32" y1="50" x2="32" y2="60" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
@@ -221,16 +189,25 @@
       const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv';
       const NOMINATIM_PROXY = "https://corsproxy.io/?";
       const loadingOverlay = document.getElementById('loadingOverlay');
-      const eventList = document.getElementById('eventList');
       const calendarGrid = document.getElementById('calendarGrid');
       const monthYear = document.getElementById('monthYear');
       let events = [], markers = [], markerMap = {}, selectedDayEl = null, currentYear, currentMonth;
 
-      const defaultCenter = [40.95, -72.30];
+      const defaultCenter = [40.95, -72.70];
       const defaultZoom = 10;
-      const map = L.map('map', { zoomControl: false, scrollWheelZoom: false }).setView(defaultCenter, defaultZoom);
+      const map = L.map('map', {
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchZoom: false,
+        tap: false,
+        zoomSnap: 0
+      }).setView(defaultCenter, defaultZoom);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-      L.control.zoom({ position: 'topright' }).addTo(map);
 
       function normalizeDate(input) {
         if (!input) return null;
@@ -294,12 +271,6 @@
             const key = `${event.name}__${event.address}`;
             markerMap[key] = marker;
           }
-        }
-        if (coordsList.length > 0) {
-          const bounds = L.latLngBounds(coordsList);
-          map.fitBounds(bounds.pad(0.3));
-        } else {
-          map.setView(defaultCenter, defaultZoom);
         }
       }
 
