@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Map Calendar with Clickable Pins & Loading</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+    }
+    #map {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+      z-index: 0;
+    }
+    .calendar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 360px;
+      height: 560px;
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Mobile styles */
+    @media (max-width: 480px) {
+      .calendar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 40vh;
+        border-radius: 16px 16px 0 0;
+        padding: 15px 20px 10px 20px;
+        box-shadow: 0 -8px 20px rgba(0,0,0,0.1);
+        overflow-y: auto;
+      }
+      #map {
+        height: 60vh;
+      }
+      .calendar-header {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+      }
+      .calendar-grid {
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .day {
+        padding: 8px 0;
+        font-size: 0.85em;
+      }
+      .event-list.visible {
+        max-height: 180px;
+      }
+      .calendar-header button {
+        font-size: 1.8em;
+        padding: 0 14px;
+      }
+    }
+
+    .calendar-header {
+      font-size: 1.4em;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .calendar-header button {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      color: #3b82f6;
+      user-select: none;
+      padding: 0 10px;
+      transition: color 0.2s;
+    }
+    .calendar-header button:hover {
+      color: #1d4ed8;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .calendar-grid div:first-child:nth-last-child(n+29):nth-last-child(-n+35) {
+      grid-column: span 7;
+    }
+    .calendar-grid .day-label {
+      text-align: center;
+      font-size: 0.85em;
+      font-weight: bold;
+      color: #64748b;
+    }
+    .day {
+      background: #f1f5f9;
+      color: #111827;
+      padding: 12px 0;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 0.95em;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .day:hover {
+      background: #dbeafe;
+      color: #1e3a8a;
+      transform: scale(1.05);
+    }
+    .day.selected {
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      transform: scale(1.1);
+    }
+    .day.today {
+      border: 2px solid #3b82f6;
+    }
+    .event-list {
+      margin-top: auto;
+      max-height: 0;
+      overflow: hidden;
+      flex-grow: 0;
+      border-top: 1px solid #ddd;
+      padding: 0 15px;
+      opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+      list-style: none;
+    }
+    .event-list.visible {
+      max-height: 300px;
+      padding: 10px 15px;
+      flex-grow: 1;
+      opacity: 1;
+      overflow-y: auto;
+    }
+    .event-list li {
+      padding: 8px 12px;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+    .event-list li:hover {
+      background-color: #e0e7ff;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      z-index: 20000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      font-size: 1.2em;
+      color: #3b82f6;
+      user-select: none;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    #loadingGuitar {
+      width: 80px;
+      height: 80px;
+      animation: spin 2s linear infinite;
+      margin-bottom: 15px;
+      fill: #3b82f6;
+    }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+</head>
+<body>
+  <div id="map"></div>
+  <div class="calendar">
+    <div class="calendar-header">
+      <button id="prevMonth">&#8592;</button>
+      <div id="monthYear"></div>
+      <button id="nextMonth">&#8594;</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <ul class="event-list" id="eventList"></ul>
+  </div>
+
+  <div id="loadingOverlay" aria-live="polite" aria-busy="true" role="alert">
+    <svg id="loadingGuitar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="Loading microphone icon" role="img" >
+      <rect x="22" y="12" width="20" height="30" rx="10" ry="10" />
+      <rect x="27" y="42" width="10" height="8" />
+      <line x1="32" y1="50" x2="32" y2="60" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    Loading events...
+  </div>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv';
+      const NOMINATIM_PROXY = "https://corsproxy.io/?";
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const eventList = document.getElementById('eventList');
+      const calendarGrid = document.getElementById('calendarGrid');
+      const monthYear = document.getElementById('monthYear');
+      let events = [], markers = [], markerMap = {}, selectedDayEl = null, currentYear, currentMonth;
+
+      const defaultCenter = [40.95, -72.30];
+      const defaultZoom = 10;
+      const map = L.map('map', { zoomControl: false, scrollWheelZoom: false }).setView(defaultCenter, defaultZoom);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      function normalizeDate(input) {
+        if (!input) return null;
+        const parts = input.trim().split(/[\/\-]/);
+        let [y, m, d] = parts.length === 3 ? parts : [null, null, null];
+        if (y && y.length !== 4) [m, d, y] = parts;
+        return y && m && d ? `${y.padStart(4,'0')}-${m.padStart(2,'0')}-${d.padStart(2,'0')}` : null;
+      }
+
+function formatTime12h(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return "";
+
+  // Remove seconds if present (e.g., "4:00:00 PM" → "4:00 PM", "16:00:00" → "16:00")
+  timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, '$1');
+
+  // Already in AM/PM format
+  if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) {
+    return timeStr.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1');
+  }
+
+  // Convert 24h to 12h
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return timeStr;
+
+  let [_, hourStr, minuteStr] = match;
+  let hour = parseInt(hourStr, 10);
+  const minute = minuteStr;
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${minute} ${ampm}`;
+}
+
+
+
+
+      async function geocodeAddress(address) {
+        if (address in markerMap) return markerMap[address]; // shortcut to cached
+        try {
+          const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`);
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.length > 0) {
+            const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            return coords;
+          }
+        } catch (e) {
+          console.error("Geocoding failed:", e);
+        }
+        return null;
+      }
+
+      function clearMarkers() {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+      }
+
+      async function showEventsOnMap(matches) {
+        clearMarkers();
+        markerMap = {};
+        const coordsList = [];
+        for (const event of matches) {
+          if (!event.address) continue;
+          const coords = await geocodeAddress(event.address);
+          if (coords) {
+            const timeFormatted = event.time ? formatTime12h(event.time) : "";
+            const popupContent = `<strong>${event.name}</strong><br>${timeFormatted ? timeFormatted + '<br>' : ''}${event.address}`;
+            const marker = L.marker([coords.lat, coords.lng]).addTo(map).bindPopup(popupContent);
+            markers.push(marker);
+            coordsList.push([coords.lat, coords.lng]);
+            const key = `${event.name}__${event.address}`;
+            markerMap[key] = marker;
+          }
+        }
+        if (coordsList.length > 0) {
+          const bounds = L.latLngBounds(coordsList);
+          map.fitBounds(bounds.pad(0.3));
+        } else {
+          map.setView(defaultCenter, defaultZoom);
+        }
+      }
+
+      function buildCalendar(year, month) {
+        calendarGrid.innerHTML = '';
+        eventList.innerHTML = '';
+        selectedDayEl = null;
+        eventList.classList.remove('visible');
+
+        const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayLabels.forEach(label => {
+          const labelEl = document.createElement('div');
+          labelEl.textContent = label;
+          labelEl.className = 'day-label';
+          calendarGrid.appendChild(labelEl);
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
+        monthYear.textContent = `${monthName} ${year}`;
+
+        for (let i = 0; i < firstDay; i++) {
+          calendarGrid.appendChild(document.createElement('div'));
+        }
+
+        const today = new Date();
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const cell = document.createElement('div');
+          cell.className = 'day';
+          cell.textContent = day;
+
+          const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+          if (isToday) cell.classList.add('today');
+
+          cell.onclick = async () => {
+            if (selectedDayEl) selectedDayEl.classList.remove('selected');
+            cell.classList.add('selected');
+            selectedDayEl = cell;
+            loadingOverlay.style.display = 'flex';
+
+            const clicked = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const matches = events.filter(e => e.date === clicked);
+            if (matches.length) {
+              eventList.innerHTML = '';
+              for (const e of matches) {
+                const timeFormatted = e.time ? formatTime12h(e.time) : "";
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${e.name}</strong><br><small>${timeFormatted ? timeFormatted + " — " : ""}${e.address}</small>`;
+                const key = `${e.name}__${e.address}`;
+                li.onclick = () => {
+                  const marker = markerMap[key];
+                  if (marker) {
+                    map.flyTo(defaultCenter, defaultZoom, { animate: true, duration: 1.5 });
+                    setTimeout(() => {
+                      map.flyTo(marker.getLatLng(), 15, { animate: true, duration: 2 });
+                      marker.openPopup();
+                    }, 1600);
+                  }
+                };
+                eventList.appendChild(li);
+              }
+              eventList.classList.add('visible');
+            } else {
+              eventList.innerHTML = '<li>No events on this date.</li>';
+              eventList.classList.add('visible');
+            }
+
+            await showEventsOnMap(matches);
+            loadingOverlay.style.display = 'none';
+          };
+
+          calendarGrid.appendChild(cell);
+        }
+      }
+
+      function setupNavigation() {
+        document.getElementById('prevMonth').onclick = () => {
+          currentMonth--;
+          if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+          buildCalendar(currentYear, currentMonth);
+        };
+        document.getElementById('nextMonth').onclick = () => {
+          currentMonth++;
+          if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+          buildCalendar(currentYear, currentMonth);
+        };
+      }
+
+      async function loadEvents() {
+        try {
+          loadingOverlay.style.display = 'flex';
+          const res = await fetch(SHEET_CSV_URL);
+          if (!res.ok) throw new Error('Network response was not ok');
+          const csvText = await res.text();
+          const results = Papa.parse(csvText, { header: false });
+          const raw = [];
+
+          for (let i = 1; i < results.data.length; i++) {
+            const row = results.data[i];
+            const name = row[0]?.trim(), address = row[4]?.trim(), rawDate = row[8]?.trim();
+            const time = row[9]?.trim();
+            const date = normalizeDate(rawDate);
+            if (name && date && address) raw.push({ name, date, address, time });
+          }
+
+          const seen = new Set();
+          events = raw.filter(e => {
+            const key = `${e.name}__${e.date}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
+          const now = new Date();
+          currentYear = now.getFullYear();
+          currentMonth = now.getMonth();
+          setupNavigation();
+          buildCalendar(currentYear, currentMonth);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          loadingOverlay.style.display = 'none';
+        }
+      }
+
+      loadEvents();
+    });
+  </script>
+</body>
+</html>
