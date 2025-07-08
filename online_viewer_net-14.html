@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Map Calendar with Clickable Pins & Loading</title>
   <style>
+    /* Your original CSS exactly */
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0; height: 100%; width: 100%;
@@ -333,8 +334,10 @@
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-      // Create MarkerClusterGroup
-      const markersClusterGroup = L.markerClusterGroup();
+      // Create MarkerClusterGroup with zoomToBoundsOnClick false to prevent zooming on cluster click
+      const markersClusterGroup = L.markerClusterGroup({
+        zoomToBoundsOnClick: false,
+      });
       map.addLayer(markersClusterGroup);
 
       function normalizeDate(input) {
@@ -408,9 +411,10 @@
             }${event.address}`;
             const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
 
-            // Center map on marker when clicked
+            // Marker click: open popup only, NO map movement or zoom
             marker.on("click", () => {
-              map.setView([coords.lat, coords.lng], map.getZoom(), { animate: false });
+              // Do nothing to move map, just open popup (default)
+              // The popup opens automatically on marker click because of bindPopup
             });
 
             markersClusterGroup.addLayer(marker);
@@ -419,8 +423,12 @@
         }
       }
 
-      markersClusterGroup.on("clusterclick", function (a) {
-        const markersInCluster = a.layer.getAllChildMarkers();
+      // Cluster click: prevent zoom, only open popup with all cluster markers listed
+      markersClusterGroup.on("clusterclick", function (e) {
+        e.originalEvent.preventDefault();
+        e.originalEvent.stopPropagation();
+
+        const markersInCluster = e.layer.getAllChildMarkers();
         let popupContent = "<strong>Events here:</strong><br><br>";
         markersInCluster.forEach((m) => {
           popupContent += m.getPopup().getContent() + "<hr>";
@@ -428,7 +436,7 @@
         popupContent = popupContent.replace(/<hr>$/, "");
 
         L.popup()
-          .setLatLng(a.latlng)
+          .setLatLng(e.latlng)
           .setContent(popupContent)
           .openOn(map);
       });
@@ -493,7 +501,7 @@
             await showEventsOnMap(matches);
             loadingOverlay.style.display = "none";
 
-            // Reset map view to default center and zoom (snap, no animation)
+            // Reset map view to default center and zoom (no animation)
             map.setView(defaultCenter, defaultZoom, { animate: false });
           };
 
