@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Map Calendar with Clickable Pins & Loading</title>
   <style>
-    /* Your original CSS exactly but scaled smaller */
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0; height: 100%; width: 100%;
@@ -17,16 +16,16 @@
       width: 100vw;
       position: relative;
       z-index: 0;
-      touch-action: none; /* Disable map gestures on mobile */
+      touch-action: none;
     }
     .calendar {
       position: absolute;
       top: 20px;
       left: 20px;
-      width: 288px;  /* reduced from 360px (80%) */
+      width: 288px;
       background: white;
-      padding: 16px; /* reduced from 20px */
-      border-radius: 13px; /* reduced from 16px */
+      padding: 16px;
+      border-radius: 13px;
       box-shadow: 0 15px 35px rgba(0,0,0,0.08);
       z-index: 10000;
       display: flex;
@@ -34,19 +33,16 @@
       overflow: visible;
       height: auto;
     }
-
     @media (max-width: 480px) {
       .calendar {
         position: fixed;
-        bottom: auto;
         top: 10px;
         left: 10px;
         right: 10px;
         width: auto;
-        height: auto;
         max-height: 80vh;
-        border-radius: 13px; /* reduced from 16px */
-        padding: 12px 16px; /* reduced from 15px 20px */
+        border-radius: 13px;
+        padding: 12px 16px;
         box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         overflow: visible;
       }
@@ -54,30 +50,29 @@
         height: 100vh;
       }
       .calendar-header {
-        font-size: 1.12em; /* reduced from 1.2em */
-        margin-bottom: 8px; /* reduced from 10px */
+        font-size: 1.12em;
+        margin-bottom: 8px;
       }
       .calendar-grid {
-        gap: 5px; /* reduced from 6px */
-        margin-bottom: 8px; /* reduced from 10px */
+        gap: 5px;
+        margin-bottom: 8px;
       }
       .day {
-        width: 26px; /* reduced from 32px */
-        height: 26px; /* reduced from 32px */
-        font-size: 0.68em; /* reduced from 0.85em */
+        width: 26px;
+        height: 26px;
+        font-size: 0.68em;
         padding: 0;
       }
       .calendar-header button {
-        font-size: 1.44em; /* reduced from 1.8em */
-        padding: 0 11px; /* scaled down */
+        font-size: 1.44em;
+        padding: 0 11px;
       }
     }
-
     .calendar-header {
-      font-size: 1.12em; /* reduced from 1.4em */
+      font-size: 1.12em;
       font-weight: 600;
       text-align: center;
-      margin-bottom: 10px; /* reduced from 12px */
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -85,11 +80,11 @@
     .calendar-header button {
       background: none;
       border: none;
-      font-size: 1.2em; /* reduced from 1.5em */
+      font-size: 1.2em;
       cursor: pointer;
       color: #3b82f6;
       user-select: none;
-      padding: 0 8px; /* reduced from 10px */
+      padding: 0 8px;
       transition: color 0.2s;
     }
     .calendar-header button:hover {
@@ -98,32 +93,30 @@
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 6.4px; /* reduced from 8px */
-      margin-bottom: 12.8px; /* reduced from 16px */
+      gap: 6.4px;
+      margin-bottom: 12.8px;
     }
     .calendar-grid .day-label {
       text-align: center;
-      font-size: 0.68em; /* reduced from 0.85em */
+      font-size: 0.68em;
       font-weight: bold;
       color: #64748b;
     }
     .day {
       background: #d1d5db;
       color: #111827;
-      width: 32px; /* reduced from 40px */
-      height: 32px; /* reduced from 40px */
-      border-radius: 40%; /* slightly smaller roundness */
+      width: 32px;
+      height: 32px;
+      border-radius: 40%;
       cursor: pointer;
-      font-size: 0.76em; /* reduced from 0.95em */
+      font-size: 0.76em;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       padding: 0;
-      box-sizing: border-box;
     }
-    /* THIS IS YOUR HOVER FUNCTION */
     .day:hover {
       background: #dbeafe;
       color: #1e3a8a;
@@ -139,8 +132,6 @@
     .day.today {
       border: 2px solid #3b82f6;
     }
-
-    /* Keep the rest of your original styles untouched */
     #loadingOverlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -154,12 +145,10 @@
       color: #3b82f6;
       user-select: none;
     }
-
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-
     #loadingGuitar {
       width: 80px;
       height: 80px;
@@ -167,8 +156,6 @@
       margin-bottom: 15px;
       fill: #3b82f6;
     }
-
-    /* Cluster styles: dark blue outside, lighter blue inside */
     .marker-cluster-small {
       background-color: #3b82f6 !important;
       border: 2px solid #60a5fa !important;
@@ -182,10 +169,8 @@
       border: 2px solid #2563eb !important;
     }
     .marker-cluster div {
-      background-color: rgba(147,197,253,0.6) !important; /* lighter inside circle */
+      background-color: rgba(147,197,253,0.6) !important;
     }
-
-    /* Zoom control styling to match calendar style */
     .leaflet-control-zoom {
       background: transparent !important;
       box-shadow: none !important;
@@ -193,7 +178,6 @@
       padding: 0 !important;
       width: auto !important;
     }
-
     .leaflet-control-zoom a {
       width: 44px !important;
       height: 44px !important;
@@ -217,55 +201,30 @@
       margin: 0 !important;
       line-height: normal !important;
     }
-
-    /* Add vertical spacing between the zoom in and zoom out buttons */
     .leaflet-control-zoom a.leaflet-control-zoom-in {
-      margin-bottom: 8px !important; /* space between buttons */
+      margin-bottom: 8px !important;
     }
-
     .leaflet-control-zoom a:hover {
       background: linear-gradient(135deg, #2563eb, #3b82f6);
       box-shadow: 0 4px 14px rgba(37, 99, 235, 0.7);
     }
-
     .leaflet-control-zoom a::before {
       font-size: 28px;
       font-weight: bold;
       color: white !important;
-      text-shadow: none !important;
-      background: none !important;
-      box-shadow: none !important;
-      border: none !important;
-      user-select: none;
-      padding: 0 !important;
-      margin: 0 !important;
-      line-height: 1 !important;
     }
-
-    /* Fix for the minus sign black line */
     .leaflet-control-zoom-out::before {
       background: none !important;
       box-shadow: none !important;
       text-shadow: none !important;
       border: none !important;
       color: white !important;
-      padding: 0 !important;
-      margin: 0 !important;
     }
   </style>
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-  />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
-  />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 </head>
 <body>
   <div id="map"></div>
@@ -279,22 +238,10 @@
   </div>
 
   <div id="loadingOverlay">
-    <svg
-      id="loadingGuitar"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
-    >
+    <svg id="loadingGuitar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
       <rect x="22" y="12" width="20" height="30" rx="10" ry="10" />
       <rect x="27" y="42" width="10" height="8" />
-      <line
-        x1="32"
-        y1="50"
-        x2="32"
-        y2="60"
-        stroke="#3b82f6"
-        stroke-width="4"
-        stroke-linecap="round"
-      />
+      <line x1="32" y1="50" x2="32" y2="60" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" />
     </svg>
     Loading events...
   </div>
@@ -312,11 +259,11 @@
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
       let events = [],
-        markers = [],
-        markerMap = {},
-        selectedDayEl = null,
-        currentYear,
-        currentMonth;
+          markers = [],
+          markerMap = {},
+          selectedDayEl = null,
+          currentYear,
+          currentMonth;
 
       const defaultCenter = [41.01, -72.3];
       const defaultZoom = 10.80;
@@ -333,14 +280,14 @@
       }).setView(defaultCenter, defaultZoom);
 
       map.zoomControl.setPosition('topright');
-
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-      // Create MarkerClusterGroup with zoomToBoundsOnClick false to prevent zooming on cluster click
       const markersClusterGroup = L.markerClusterGroup({
         zoomToBoundsOnClick: false,
       });
       map.addLayer(markersClusterGroup);
+
+      let currentOpenPopup = null; // TRACK current open popup for hover behavior
 
       function normalizeDate(input) {
         if (!input) return null;
@@ -355,38 +302,30 @@
       function formatTime12h(timeStr) {
         if (!timeStr || typeof timeStr !== "string") return "";
         timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1");
-        if (
-          timeStr.toUpperCase().includes("AM") ||
-          timeStr.toUpperCase().includes("PM")
-        ) {
+        if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) {
           return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1");
         }
         const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
         if (!match) return timeStr;
         let [, hourStr, minuteStr] = match;
         let hour = parseInt(hourStr, 10);
-        const minute = minuteStr;
         const ampm = hour >= 12 ? "PM" : "AM";
         hour = hour % 12;
         if (hour === 0) hour = 12;
-        return `${hour}:${minute} ${ampm}`;
+        return `${hour}:${minuteStr} ${ampm}`;
       }
 
       async function geocodeAddress(address) {
         if (address in markerMap) return markerMap[address];
         try {
-          const url =
-            NOMINATIM_PROXY +
-            encodeURIComponent(
-              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-                address
-              )}`
-            );
+          const url = NOMINATIM_PROXY + encodeURIComponent(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`
+          );
           const res = await fetch(url);
           const data = await res.json();
           if (data.length > 0) {
             const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-            markerMap[address] = coords; // cache result
+            markerMap[address] = coords;
             return coords;
           }
         } catch (e) {
@@ -395,37 +334,36 @@
         return null;
       }
 
-      function clearMarkers() {
+      async function showEventsOnMap(matches) {
         markersClusterGroup.clearLayers();
         markers = [];
-      }
-
-      async function showEventsOnMap(matches) {
-        clearMarkers();
 
         for (const event of matches) {
           if (!event.address) continue;
           const coords = await geocodeAddress(event.address);
           if (coords) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
-            const popupContent = `<strong>${event.name}</strong><br>${
-              timeFormatted ? timeFormatted + "<br>" : ""
-            }${event.address}`;
+            const popupContent = `
+              <strong>${event.name}</strong><br>
+              ${event.website ? `Band Website: <a href="${event.website}" target="_blank">Click me</a><br>` : ""}
+              ${timeFormatted ? `Start Time: ${timeFormatted}<br>` : ""}
+              ${event.date ? `Start Date: ${event.date}<br>` : ""}
+              ${event.venue ? `Venue: ${event.venue}<br>` : ""}
+              ${event.address}<br>
+              ${event.phone ? `Phone: ${event.phone}` : ""}
+            `;
             const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
 
-            // Marker hover: show popup on hover, close on mouseout
             marker.on("mouseover", () => {
+              if (currentOpenPopup && currentOpenPopup !== marker) {
+                currentOpenPopup.closePopup();
+              }
               marker.openPopup();
+              currentOpenPopup = marker;
             });
-            marker.on("mouseout", () => {
-              marker.closePopup();
-            });
+            // No mouseout handler so popup stays open
 
-            // Marker click: open popup only, NO map movement or zoom
-            marker.on("click", () => {
-              // Do nothing to move map, just open popup (default)
-              // The popup opens automatically on marker click because of bindPopup
-            });
+            marker.on("click", () => {}); // Empty click handler as before
 
             markersClusterGroup.addLayer(marker);
             markers.push(marker);
@@ -433,7 +371,6 @@
         }
       }
 
-      // Cluster hover: show popup listing all events in cluster on hover, close on mouseout
       markersClusterGroup.on("clustermouseover", function (e) {
         const markersInCluster = e.layer.getAllChildMarkers();
         let popupContent = "<strong>Events here:</strong><br><br>";
@@ -441,34 +378,29 @@
           popupContent += m.getPopup().getContent() + "<hr>";
         });
         popupContent = popupContent.replace(/<hr>$/, "");
-
+        if (currentOpenPopup && currentOpenPopup !== e.layer) {
+          currentOpenPopup.closePopup();
+        }
         e.layer.bindPopup(popupContent).openPopup();
-      });
-      markersClusterGroup.on("clustermouseout", function (e) {
-        e.layer.closePopup();
+        currentOpenPopup = e.layer;
       });
 
-      // Cluster click: prevent zoom, only open popup with all cluster markers listed
+      // Removed clustermouseout so popup stays open on cluster hover
+
       markersClusterGroup.on("clusterclick", function (e) {
         e.originalEvent.preventDefault();
         e.originalEvent.stopPropagation();
-
         const markersInCluster = e.layer.getAllChildMarkers();
         let popupContent = "<strong>Events here:</strong><br><br>";
         markersInCluster.forEach((m) => {
           popupContent += m.getPopup().getContent() + "<hr>";
         });
         popupContent = popupContent.replace(/<hr>$/, "");
-
-        L.popup()
-          .setLatLng(e.latlng)
-          .setContent(popupContent)
-          .openOn(map);
+        L.popup().setLatLng(e.latlng).setContent(popupContent).openOn(map);
       });
 
       function buildCalendar(year, month) {
         calendarGrid.innerHTML = "";
-        // Don't clear selectedDayEl here to preserve selection across months
         const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         dayLabels.forEach((label) => {
           const labelEl = document.createElement("div");
@@ -479,9 +411,7 @@
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const monthName = new Date(year, month).toLocaleString("default", {
-          month: "long",
-        });
+        const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
         monthYear.textContent = `${monthName} ${year}`;
 
         for (let i = 0; i < firstDay; i++) {
@@ -499,7 +429,6 @@
             today.getFullYear() === year;
           if (isToday) cell.classList.add("today");
 
-          // Restore previously selected day on the month, if any
           if (
             selectedDayEl &&
             selectedDayEl.dataset.year == year &&
@@ -519,14 +448,11 @@
 
             loadingOverlay.style.display = "flex";
 
-            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-              day
-            ).padStart(2, "0")}`;
+            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const matches = events.filter((e) => e.date === clicked);
             await showEventsOnMap(matches);
             loadingOverlay.style.display = "none";
 
-            // Reset map view to default center and zoom (no animation)
             map.setView(defaultCenter, defaultZoom, { animate: false });
           };
 
@@ -553,46 +479,28 @@
         };
       }
 
-      async function loadEvents() {
-        try {
+      Papa.parse(SHEET_CSV_URL, {
+        download: true,
+        header: true,
+        complete: async function (results) {
           loadingOverlay.style.display = "flex";
-          const res = await fetch(SHEET_CSV_URL);
-          if (!res.ok) throw new Error("Network response was not ok");
-          const csvText = await res.text();
-          const results = Papa.parse(csvText, { header: false });
-          const raw = [];
-
-          for (let i = 1; i < results.data.length; i++) {
-            const row = results.data[i];
-            const name = row[0]?.trim(),
-              address = row[4]?.trim(),
-              rawDate = row[8]?.trim();
-            const time = row[9]?.trim();
-            const date = normalizeDate(rawDate);
-            if (name && date && address) raw.push({ name, date, address, time });
-          }
-
-          const seen = new Set();
-          events = raw.filter((e) => {
-            const key = `${e.name}__${e.date}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-
-          const now = new Date();
-          currentYear = now.getFullYear();
-          currentMonth = now.getMonth();
-          setupNavigation();
+          events = results.data.map((row) => ({
+            name: row["Name"] || "",
+            address: row["Address"] || "",
+            date: normalizeDate(row["Date"]),
+            time: row["Time"] || "",
+            website: row["Band Website"] || "",
+            venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "",
+            phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "",
+          }));
+          const today = new Date();
+          currentYear = today.getFullYear();
+          currentMonth = today.getMonth();
           buildCalendar(currentYear, currentMonth);
-        } catch (e) {
-          console.error(e);
-        } finally {
+          setupNavigation();
           loadingOverlay.style.display = "none";
-        }
-      }
-
-      loadEvents();
+        },
+      });
     });
   </script>
 </body>
