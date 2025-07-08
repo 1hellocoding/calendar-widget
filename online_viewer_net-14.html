@@ -61,8 +61,10 @@
         margin-bottom: 10px;
       }
       .day {
-        padding: 8px 0;
+        width: 32px;
+        height: 32px;
         font-size: 0.85em;
+        padding: 0;
       }
       .calendar-header button {
         font-size: 1.8em;
@@ -105,9 +107,10 @@
       color: #64748b;
     }
     .day {
-      background: #d1d5db; /* slightly darker than before */
+      background: #d1d5db;
       color: #111827;
-      padding: 12px 0;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       cursor: pointer;
       font-size: 0.95em;
@@ -116,6 +119,8 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 0;
+      box-sizing: border-box;
     }
     .day:hover {
       background: #dbeafe;
@@ -160,35 +165,21 @@
       fill: #3b82f6;
     }
 
-    /* Cluster styling overrides */
-    /* Outer cluster circle */
-    .leaflet-marker-icon.marker-cluster {
-      background-color: #1e40af !important;  /* dark blue */
-      border: 3px solid #1e40af !important;  /* same dark blue border for outer circle */
-      color: white !important;
-      font-weight: bold;
-      text-align: center;
-      line-height: 40px;
-      box-shadow: 0 0 10px rgba(30, 64, 175, 0.7);
+    /* Cluster styles: dark blue outside, lighter blue inside */
+    .marker-cluster-small {
+      background-color: #3b82f6 !important;
+      border: 2px solid #60a5fa !important;
     }
-
-    /* Inner circle — lighter blue background, smaller ring inside */
+    .marker-cluster-medium {
+      background-color: #1e40af !important;
+      border: 2px solid #3b82f6 !important;
+    }
+    .marker-cluster-large {
+      background-color: #1e3a8a !important;
+      border: 2px solid #2563eb !important;
+    }
     .marker-cluster div {
-      background: #60a5fa !important; /* lighter blue inner circle */
-      border: 3px solid #3b82f6 !important;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      line-height: 36px;
-      margin: 2px auto;
-      box-shadow: none !important;
-    }
-
-    /* Text inside clusters */
-    .leaflet-marker-icon.marker-cluster div {
-      color: white !important;
-      font-weight: bold;
-      font-size: 14px;
+      background-color: rgba(147,197,253,0.6) !important; /* lighter inside circle */
     }
   </style>
 
@@ -254,13 +245,12 @@
         markerMap = {},
         selectedDayEl = null,
         currentYear,
-        currentMonth,
-        selectedDatesByMonth = {};
+        currentMonth;
 
-      const defaultCenter = [40.95, -72.7];
-      const defaultZoom = 10;
+      const defaultCenter = [41.03, -72.4];
+      const defaultZoom = 10.86;
       const map = L.map("map", {
-        zoomControl: true,      // zoom buttons shown top right
+        zoomControl: true,
         dragging: false,
         scrollWheelZoom: false,
         doubleClickZoom: false,
@@ -270,7 +260,7 @@
         tap: false,
         zoomSnap: 0,
       }).setView(defaultCenter, defaultZoom);
-
+      
       map.zoomControl.setPosition('topright');
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
@@ -349,16 +339,16 @@
               timeFormatted ? timeFormatted + "<br>" : ""
             }${event.address}`;
             const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
-            marker.on('click', () => {
+
+            // Center map on marker when clicked
+            marker.on("click", () => {
               map.setView([coords.lat, coords.lng], map.getZoom(), { animate: false });
             });
+
             markersClusterGroup.addLayer(marker);
             markers.push(marker);
           }
         }
-
-        // Reset map view to default on new date selection (snap zoom & center)
-        map.setView(defaultCenter, defaultZoom, { animate: false });
       }
 
       markersClusterGroup.on("clusterclick", function (a) {
@@ -377,7 +367,7 @@
 
       function buildCalendar(year, month) {
         calendarGrid.innerHTML = "";
-        selectedDayEl = null;
+        // Don't clear selectedDayEl here to preserve selection across months
         const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         dayLabels.forEach((label) => {
           const labelEl = document.createElement("div");
@@ -398,9 +388,6 @@
         }
 
         const today = new Date();
-        const monthKey = `${year}-${month}`;
-        const selectedDay = selectedDatesByMonth[monthKey] || null;
-
         for (let day = 1; day <= daysInMonth; day++) {
           const cell = document.createElement("div");
           cell.className = "day";
@@ -411,7 +398,13 @@
             today.getFullYear() === year;
           if (isToday) cell.classList.add("today");
 
-          if (day === selectedDay) {
+          // Restore previously selected day on the month, if any
+          if (
+            selectedDayEl &&
+            selectedDayEl.dataset.year == year &&
+            selectedDayEl.dataset.month == month &&
+            selectedDayEl.textContent == day
+          ) {
             cell.classList.add("selected");
             selectedDayEl = cell;
           }
@@ -420,9 +413,8 @@
             if (selectedDayEl) selectedDayEl.classList.remove("selected");
             cell.classList.add("selected");
             selectedDayEl = cell;
-
-            // Remember selected day for this month
-            selectedDatesByMonth[monthKey] = day;
+            selectedDayEl.dataset.year = year;
+            selectedDayEl.dataset.month = month;
 
             loadingOverlay.style.display = "flex";
 
@@ -432,6 +424,9 @@
             const matches = events.filter((e) => e.date === clicked);
             await showEventsOnMap(matches);
             loadingOverlay.style.display = "none";
+
+            // Reset map view to default center and zoom (snap, no animation)
+            map.setView(defaultCenter, defaultZoom, { animate: false });
           };
 
           calendarGrid.appendChild(cell);
