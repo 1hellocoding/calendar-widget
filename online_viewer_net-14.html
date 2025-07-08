@@ -37,18 +37,17 @@
     @media (max-width: 480px) {
       .calendar {
         position: fixed;
-        top: 10px;
-        left: 10px;
-        right: 10px;
-        width: auto;
-        height: auto;
+        top: 10px; left: 10px; right: 10px;
+        width: auto; height: auto;
         max-height: 80vh;
         border-radius: 16px;
         padding: 15px 20px;
         box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         overflow: visible;
       }
-      #map { height: 100vh; }
+      #map {
+        height: 100vh;
+      }
       .calendar-header {
         font-size: 1.2em;
         margin-bottom: 10px;
@@ -86,8 +85,9 @@
       padding: 0 10px;
       transition: color 0.2s;
     }
-    .calendar-header button:hover { color: #1d4ed8; }
-
+    .calendar-header button:hover {
+      color: #1d4ed8;
+    }
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -101,7 +101,7 @@
       color: #64748b;
     }
     .day {
-      background: #f1f5f9;
+      background: #cbd5e1;
       color: #111827;
       padding: 12px 0;
       border-radius: 50%;
@@ -114,7 +114,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .day:hover {
-      background: #dbeafe;
+      background: #94a3b8;
       color: #1e3a8a;
       transform: scale(1.05);
     }
@@ -125,7 +125,9 @@
       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
       transform: scale(1.1);
     }
-    .day.today { border: 2px solid #3b82f6; }
+    .day.today {
+      border: 2px solid #3b82f6;
+    }
 
     #loadingOverlay {
       position: fixed;
@@ -145,6 +147,7 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+
     #loadingGuitar {
       width: 80px;
       height: 80px;
@@ -160,6 +163,7 @@
 </head>
 <body>
   <div id="map"></div>
+
   <div class="calendar">
     <div class="calendar-header">
       <button id="prevMonth">&#8592;</button>
@@ -181,7 +185,6 @@
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script defer src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script defer src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
@@ -189,10 +192,11 @@
       const loadingOverlay = document.getElementById("loadingOverlay");
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
-      let events = [], markers = [], markerMap = {}, selectedDayEl = null, currentYear, currentMonth;
 
-      const defaultCenter = [40.95, -72.7];
+      let events = [], markerMap = {}, selectedDayEl = null, selectedDate = null, currentYear, currentMonth;
+      const defaultCenter = [40.95, -72.70];
       const defaultZoom = 10;
+
       const map = L.map("map", {
         zoomControl: true,
         dragging: false,
@@ -202,13 +206,12 @@
         keyboard: false,
         touchZoom: false,
         tap: false,
-        zoomSnap: 0,
+        zoomSnap: 0
       }).setView(defaultCenter, defaultZoom);
 
       map.zoomControl.setPosition("topright");
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-
       const markersClusterGroup = L.markerClusterGroup();
       map.addLayer(markersClusterGroup);
 
@@ -221,19 +224,19 @@
       }
 
       function formatTime12h(timeStr) {
-        if (!timeStr || typeof timeStr !== "string") return "";
-        timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1");
-        if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) {
-          return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1");
+        if (!timeStr || typeof timeStr !== 'string') return "";
+        timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, '$1');
+        if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) {
+          return timeStr.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1');
         }
         const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
         if (!match) return timeStr;
-        let [, hourStr, minuteStr] = match;
+        let [_, hourStr, minuteStr] = match;
         let hour = parseInt(hourStr, 10);
         const ampm = hour >= 12 ? "PM" : "AM";
         hour = hour % 12;
         if (hour === 0) hour = 12;
-        return `${hour}:${minute} ${ampm}`;
+        return `${hour}:${minuteStr} ${ampm}`;
       }
 
       async function geocodeAddress(address) {
@@ -255,7 +258,6 @@
 
       function clearMarkers() {
         markersClusterGroup.clearLayers();
-        markers = [];
       }
 
       async function showEventsOnMap(matches) {
@@ -266,36 +268,30 @@
           if (coords) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
             const popupContent = `<strong>${event.name}</strong><br>${timeFormatted ? timeFormatted + "<br>" : ""}${event.address}`;
-            const marker = L.marker([coords.lat, coords.lng])
-              .bindPopup(popupContent)
-              .on('click', () => {
-                map.setView([coords.lat, coords.lng], map.getZoom(), { animate: false });
-              });
+            const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
+            marker.on("click", () => map.setView([coords.lat, coords.lng], map.getZoom()));
             markersClusterGroup.addLayer(marker);
-            markers.push(marker);
           }
         }
       }
 
-      markersClusterGroup.on("clusterclick", function (a) {
-        const markersInCluster = a.layer.getAllChildMarkers();
-        let popupContent = "<strong>Events here:</strong><br><br>";
-        markersInCluster.forEach((m) => {
-          popupContent += m.getPopup().getContent() + "<hr>";
-        });
-        popupContent = popupContent.replace(/<hr>$/, "");
-        L.popup().setLatLng(a.latlng).setContent(popupContent).openOn(map);
+      markersClusterGroup.on("clusterclick", (e) => {
+        const cluster = e.layer.getAllChildMarkers();
+        let content = "<strong>Events here:</strong><br><br>";
+        cluster.forEach(m => content += m.getPopup().getContent() + "<hr>");
+        content = content.replace(/<hr>$/, "");
+        L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
       });
 
       function buildCalendar(year, month) {
         calendarGrid.innerHTML = "";
         selectedDayEl = null;
-        const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        dayLabels.forEach((label) => {
-          const labelEl = document.createElement("div");
-          labelEl.textContent = label;
-          labelEl.className = "day-label";
-          calendarGrid.appendChild(labelEl);
+        const dayLabels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        dayLabels.forEach(label => {
+          const el = document.createElement("div");
+          el.className = "day-label";
+          el.textContent = label;
+          calendarGrid.appendChild(el);
         });
 
         const firstDay = new Date(year, month, 1).getDay();
@@ -303,33 +299,35 @@
         const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
         monthYear.textContent = `${monthName} ${year}`;
 
-        for (let i = 0; i < firstDay; i++) {
-          calendarGrid.appendChild(document.createElement("div"));
-        }
+        for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement("div"));
 
         const today = new Date();
         for (let day = 1; day <= daysInMonth; day++) {
           const cell = document.createElement("div");
           cell.className = "day";
           cell.textContent = day;
-          const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
-          if (isToday) cell.classList.add("today");
+          const iso = `${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+          if (iso === selectedDate) {
+            cell.classList.add("selected");
+            selectedDayEl = cell;
+          }
+          if (today.getDate() === day && today.getMonth() === month && today.getFullYear() === year) {
+            cell.classList.add("today");
+          }
 
           cell.onclick = async () => {
             if (selectedDayEl) selectedDayEl.classList.remove("selected");
             cell.classList.add("selected");
             selectedDayEl = cell;
+            selectedDate = iso;
+
             loadingOverlay.style.display = "flex";
+            map.setView(defaultCenter, defaultZoom);
 
-            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const matches = events.filter((e) => e.date === clicked);
-
-            map.setView(defaultCenter, defaultZoom, { animate: false }); // Snap back
-
+            const matches = events.filter(e => e.date === iso);
             await showEventsOnMap(matches);
             loadingOverlay.style.display = "none";
           };
-
           calendarGrid.appendChild(cell);
         }
       }
@@ -357,7 +355,6 @@
         try {
           loadingOverlay.style.display = "flex";
           const res = await fetch(SHEET_CSV_URL);
-          if (!res.ok) throw new Error("Network response was not ok");
           const csvText = await res.text();
           const results = Papa.parse(csvText, { header: false });
           const raw = [];
@@ -371,7 +368,7 @@
           }
 
           const seen = new Set();
-          events = raw.filter((e) => {
+          events = raw.filter(e => {
             const key = `${e.name}__${e.date}`;
             if (seen.has(key)) return false;
             seen.add(key);
