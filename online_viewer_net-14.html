@@ -181,6 +181,74 @@
     .marker-cluster div {
       background-color: rgba(147,197,253,0.6) !important; /* lighter inside circle */
     }
+
+    /* Zoom control styling to match calendar style */
+    .leaflet-control-zoom {
+      background: transparent !important;
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+      width: auto !important;
+    }
+
+    .leaflet-control-zoom a {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, #3b82f6, #60a5fa) !important;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      color: white !important;
+      font-weight: bold;
+      font-size: 28px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      border: none !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      box-sizing: border-box;
+      text-decoration: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      line-height: normal !important;
+    }
+
+    /* Add vertical spacing between the zoom in and zoom out buttons */
+    .leaflet-control-zoom a.leaflet-control-zoom-in {
+      margin-bottom: 8px !important; /* space between buttons */
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.7);
+    }
+
+    .leaflet-control-zoom a::before {
+      font-size: 28px;
+      font-weight: bold;
+      color: white !important;
+      text-shadow: none !important;
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
+      user-select: none;
+      padding: 0 !important;
+      margin: 0 !important;
+      line-height: 1 !important;
+    }
+
+    /* Fix for the minus sign black line */
+    .leaflet-control-zoom-out::before {
+      background: none !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      border: none !important;
+      color: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
   </style>
 
   <link
@@ -260,7 +328,7 @@
         tap: false,
         zoomSnap: 0,
       }).setView(defaultCenter, defaultZoom);
-      
+
       map.zoomControl.setPosition('topright');
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
