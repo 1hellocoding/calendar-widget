@@ -16,7 +16,7 @@
       width: 100vw;
       position: relative;
       z-index: 0;
-      touch-action: none; /* Disable map gestures on mobile */
+      touch-action: none;
     }
     .calendar {
       position: absolute;
@@ -37,7 +37,6 @@
     @media (max-width: 480px) {
       .calendar {
         position: fixed;
-        bottom: auto;
         top: 10px;
         left: 10px;
         right: 10px;
@@ -49,9 +48,7 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         overflow: visible;
       }
-      #map {
-        height: 100vh;
-      }
+      #map { height: 100vh; }
       .calendar-header {
         font-size: 1.2em;
         margin-bottom: 10px;
@@ -89,9 +86,8 @@
       padding: 0 10px;
       transition: color 0.2s;
     }
-    .calendar-header button:hover {
-      color: #1d4ed8;
-    }
+    .calendar-header button:hover { color: #1d4ed8; }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -129,9 +125,7 @@
       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
       transform: scale(1.1);
     }
-    .day.today {
-      border: 2px solid #3b82f6;
-    }
+    .day.today { border: 2px solid #3b82f6; }
 
     #loadingOverlay {
       position: fixed;
@@ -151,7 +145,6 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-
     #loadingGuitar {
       width: 80px;
       height: 80px;
@@ -161,18 +154,9 @@
     }
   </style>
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-  />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
-  />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 </head>
 <body>
   <div id="map"></div>
@@ -186,22 +170,10 @@
   </div>
 
   <div id="loadingOverlay">
-    <svg
-      id="loadingGuitar"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
-    >
+    <svg id="loadingGuitar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
       <rect x="22" y="12" width="20" height="30" rx="10" ry="10" />
       <rect x="27" y="42" width="10" height="8" />
-      <line
-        x1="32"
-        y1="50"
-        x2="32"
-        y2="60"
-        stroke="#3b82f6"
-        stroke-width="4"
-        stroke-linecap="round"
-      />
+      <line x1="32" y1="50" x2="32" y2="60" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
     </svg>
     Loading events...
   </div>
@@ -212,23 +184,17 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      const SHEET_CSV_URL =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
+      const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
       const NOMINATIM_PROXY = "https://corsproxy.io/?";
       const loadingOverlay = document.getElementById("loadingOverlay");
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
-      let events = [],
-        markers = [],
-        markerMap = {},
-        selectedDayEl = null,
-        currentYear,
-        currentMonth;
+      let events = [], markers = [], markerMap = {}, selectedDayEl = null, currentYear, currentMonth;
 
       const defaultCenter = [40.95, -72.7];
       const defaultZoom = 10;
       const map = L.map("map", {
-        zoomControl: true,      // <-- show zoom buttons
+        zoomControl: true,
         dragging: false,
         scrollWheelZoom: false,
         doubleClickZoom: false,
@@ -238,12 +204,11 @@
         tap: false,
         zoomSnap: 0,
       }).setView(defaultCenter, defaultZoom);
-      
-      map.zoomControl.setPosition('topright');
+
+      map.zoomControl.setPosition("topright");
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-      // Create MarkerClusterGroup
       const markersClusterGroup = L.markerClusterGroup();
       map.addLayer(markersClusterGroup);
 
@@ -252,25 +217,19 @@
         const parts = input.trim().split(/[\/\-]/);
         let [y, m, d] = parts.length === 3 ? parts : [null, null, null];
         if (y && y.length !== 4) [m, d, y] = parts;
-        return y && m && d
-          ? `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
-          : null;
+        return y && m && d ? `${y.padStart(4,"0")}-${m.padStart(2,"0")}-${d.padStart(2,"0")}` : null;
       }
 
       function formatTime12h(timeStr) {
         if (!timeStr || typeof timeStr !== "string") return "";
         timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1");
-        if (
-          timeStr.toUpperCase().includes("AM") ||
-          timeStr.toUpperCase().includes("PM")
-        ) {
+        if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) {
           return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1");
         }
         const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
         if (!match) return timeStr;
         let [, hourStr, minuteStr] = match;
         let hour = parseInt(hourStr, 10);
-        const minute = minuteStr;
         const ampm = hour >= 12 ? "PM" : "AM";
         hour = hour % 12;
         if (hour === 0) hour = 12;
@@ -280,18 +239,12 @@
       async function geocodeAddress(address) {
         if (address in markerMap) return markerMap[address];
         try {
-          const url =
-            NOMINATIM_PROXY +
-            encodeURIComponent(
-              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-                address
-              )}`
-            );
+          const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`);
           const res = await fetch(url);
           const data = await res.json();
           if (data.length > 0) {
             const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-            markerMap[address] = coords; // cache result
+            markerMap[address] = coords;
             return coords;
           }
         } catch (e) {
@@ -307,16 +260,17 @@
 
       async function showEventsOnMap(matches) {
         clearMarkers();
-
         for (const event of matches) {
           if (!event.address) continue;
           const coords = await geocodeAddress(event.address);
           if (coords) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
-            const popupContent = `<strong>${event.name}</strong><br>${
-              timeFormatted ? timeFormatted + "<br>" : ""
-            }${event.address}`;
-            const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
+            const popupContent = `<strong>${event.name}</strong><br>${timeFormatted ? timeFormatted + "<br>" : ""}${event.address}`;
+            const marker = L.marker([coords.lat, coords.lng])
+              .bindPopup(popupContent)
+              .on('click', () => {
+                map.setView([coords.lat, coords.lng], map.getZoom(), { animate: false });
+              });
             markersClusterGroup.addLayer(marker);
             markers.push(marker);
           }
@@ -330,11 +284,7 @@
           popupContent += m.getPopup().getContent() + "<hr>";
         });
         popupContent = popupContent.replace(/<hr>$/, "");
-
-        L.popup()
-          .setLatLng(a.latlng)
-          .setContent(popupContent)
-          .openOn(map);
+        L.popup().setLatLng(a.latlng).setContent(popupContent).openOn(map);
       });
 
       function buildCalendar(year, month) {
@@ -350,9 +300,7 @@
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const monthName = new Date(year, month).toLocaleString("default", {
-          month: "long",
-        });
+        const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
         monthYear.textContent = `${monthName} ${year}`;
 
         for (let i = 0; i < firstDay; i++) {
@@ -364,10 +312,7 @@
           const cell = document.createElement("div");
           cell.className = "day";
           cell.textContent = day;
-          const isToday =
-            today.getDate() === day &&
-            today.getMonth() === month &&
-            today.getFullYear() === year;
+          const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
           if (isToday) cell.classList.add("today");
 
           cell.onclick = async () => {
@@ -376,10 +321,11 @@
             selectedDayEl = cell;
             loadingOverlay.style.display = "flex";
 
-            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-              day
-            ).padStart(2, "0")}`;
+            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const matches = events.filter((e) => e.date === clicked);
+
+            map.setView(defaultCenter, defaultZoom, { animate: false }); // Snap back
+
             await showEventsOnMap(matches);
             loadingOverlay.style.display = "none";
           };
@@ -418,9 +364,7 @@
 
           for (let i = 1; i < results.data.length; i++) {
             const row = results.data[i];
-            const name = row[0]?.trim(),
-              address = row[4]?.trim(),
-              rawDate = row[8]?.trim();
+            const name = row[0]?.trim(), address = row[4]?.trim(), rawDate = row[8]?.trim();
             const time = row[9]?.trim();
             const date = normalizeDate(rawDate);
             if (name && date && address) raw.push({ name, date, address, time });
