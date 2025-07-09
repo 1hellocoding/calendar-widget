@@ -261,11 +261,11 @@
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
       let events = [],
-          markers = [],
-          markerMap = {},
-          selectedDayEl = null,
-          currentYear,
-          currentMonth;
+        markers = [],
+        markerMap = {},
+        selectedDayEl = null,
+        currentYear,
+        currentMonth;
 
       const defaultCenter = [41.01, -72.3];
       const defaultZoom = 10.80;
@@ -339,11 +339,16 @@
       async function showEventsOnMap(matches) {
         markersClusterGroup.clearLayers();
         markers = [];
+        
+        const geocodePromises = matches.map(event => {
+            if (!event.address) return Promise.resolve(null);
+            return geocodeAddress(event.address).then(coords => ({ ...event, coords }));
+        });
 
-        for (const event of matches) {
-          if (!event.address) continue;
-          const coords = await geocodeAddress(event.address);
-          if (coords) {
+        const eventsWithCoords = await Promise.all(geocodePromises);
+
+        for (const event of eventsWithCoords) {
+          if (event && event.coords) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
             const imageUrl = event.bandPicture || DEFAULT_BAND_PICTURE;
 
@@ -357,7 +362,7 @@
               ${event.address}<br>
               ${event.phone ? `Phone: ${event.phone}` : ""}
             `;
-            const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
+            const marker = L.marker([event.coords.lat, event.coords.lng]).bindPopup(popupContent);
 
             marker.on("mouseover", () => {
               if (currentOpenPopup && currentOpenPopup !== marker) {
@@ -369,36 +374,15 @@
             
             marker.on("click", () => {});
 
-            markersClusterGroup.addLayer(marker);
             markers.push(marker);
           }
         }
+        markersClusterGroup.addLayers(markers);
       }
 
-      markersClusterGroup.on("clustermouseover", function (e) {
-        const markersInCluster = e.layer.getAllChildMarkers();
-        let popupContent = "<strong>Events here:</strong><br><br>";
-        markersInCluster.forEach((m) => {
-          popupContent += m.getPopup().getContent() + "<hr>";
-        });
-        popupContent = popupContent.replace(/<hr>$/, "");
-        if (currentOpenPopup && currentOpenPopup !== e.layer) {
-          currentOpenPopup.closePopup();
-        }
-        e.layer.bindPopup(popupContent).openPopup();
-        currentOpenPopup = e.layer;
-      });
-
+      // When a cluster is clicked, spiderfy it to show the individual markers
       markersClusterGroup.on("clusterclick", function (e) {
-        e.originalEvent.preventDefault();
-        e.originalEvent.stopPropagation();
-        const markersInCluster = e.layer.getAllChildMarkers();
-        let popupContent = "<strong>Events here:</strong><br><br>";
-        markersInCluster.forEach((m) => {
-          popupContent += m.getPopup().getContent() + "<hr>";
-        });
-        popupContent = popupContent.replace(/<hr>$/, "");
-        L.popup().setLatLng(e.latlng).setContent(popupContent).openOn(map);
+        e.layer.spiderfy();
       });
 
       function buildCalendar(year, month) {
@@ -461,8 +445,6 @@
           calendarGrid.appendChild(cell);
         }
       }
-
-
 
       function setupNavigation() {
         document.getElementById("prevMonth").onclick = () => {
