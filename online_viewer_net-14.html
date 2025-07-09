@@ -267,8 +267,8 @@
         currentYear,
         currentMonth;
 
-      const defaultCenter = [41.01, -72.3];
-      const defaultZoom = 10.80;
+      const defaultCenter = [41.04, -72.3];
+      const defaultZoom = 10.78;
       const map = L.map("map", {
         zoomControl: true,
         dragging: false,
@@ -360,7 +360,7 @@
               ${event.date ? `Start Date: ${event.date}<br>` : ""}
               ${event.venue ? `Venue: ${event.venue}<br>` : ""}
               ${event.address}<br>
-              ${event.phone ? `Phone: ${event.phone}` : ""}
+              ${event.phone ? `Venue Phone: ${event.phone}` : ""}
             `;
             const marker = L.marker([event.coords.lat, event.coords.lng]).bindPopup(popupContent);
 
