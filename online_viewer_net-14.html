@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Map Calendar with Clickable Pins & Loading</title>
   <style>
-    /* Your existing CSS unchanged */
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0; height: 100%; width: 100%;
@@ -256,6 +255,8 @@
       const SHEET_CSV_URL =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
       const NOMINATIM_PROXY = "https://corsproxy.io/?";
+      const DEFAULT_BAND_PICTURE = "https://i.postimg.cc/Jht8Lqt0/temp-Image-U5czf-J.avif";
+
       const loadingOverlay = document.getElementById("loadingOverlay");
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
@@ -268,7 +269,6 @@
 
       const defaultCenter = [41.01, -72.3];
       const defaultZoom = 10.80;
-      const DEFAULT_IMAGE = "https://i.postimg.cc/Jht8Lqt0/temp-Image-U5czf-J.avif";
       const map = L.map("map", {
         zoomControl: true,
         dragging: false,
@@ -289,7 +289,7 @@
       });
       map.addLayer(markersClusterGroup);
 
-      let currentOpenPopup = null; // TRACK current open popup for hover behavior
+      let currentOpenPopup = null;
 
       function normalizeDate(input) {
         if (!input) return null;
@@ -315,13 +315,6 @@
         hour = hour % 12;
         if (hour === 0) hour = 12;
         return `${hour}:${minuteStr} ${ampm}`;
-      }
-
-      // New helper: extract URL from =IMAGE("url") formula
-      function extractImageUrl(imageFormula) {
-        if (!imageFormula) return "";
-        const match = imageFormula.match(/=IMAGE\("([^"]+)"/i);
-        return match ? match[1] : imageFormula; // If not formula, assume direct URL
       }
 
       async function geocodeAddress(address) {
@@ -352,18 +345,12 @@
           const coords = await geocodeAddress(event.address);
           if (coords) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
-            // Extract real image URL from formula or raw string
-            const imgUrl = event.photo || DEFAULT_IMAGE;
-            const photoHtml = imgUrl
-              ? `<div style="text-align:center; margin-bottom:8px;">
-                   <img src="${imgUrl}" alt="Event Photo" style="max-width:200px; max-height:120px; border-radius:8px; object-fit:cover;">
-                 </div>`
-              : "";
+            const imageUrl = event.bandPicture || DEFAULT_BAND_PICTURE;
 
             const popupContent = `
-              ${photoHtml}
+              <img src="${imageUrl}" alt="${event.name}" style="width:100%; max-width:150px; display:block; margin:0 auto 10px; border-radius: 8px;">
               <strong>${event.name}</strong><br>
-              ${event.website ? `Band Website: <a href="${event.website}" target="_blank" rel="noopener noreferrer">Click me</a><br>` : ""}
+              ${event.website ? `Band Website: <a href="${event.website}" target="_blank">Click me</a><br>` : ""}
               ${timeFormatted ? `Start Time: ${timeFormatted}<br>` : ""}
               ${event.date ? `Start Date: ${event.date}<br>` : ""}
               ${event.venue ? `Venue: ${event.venue}<br>` : ""}
@@ -372,8 +359,6 @@
             `;
             const marker = L.marker([coords.lat, coords.lng]).bindPopup(popupContent);
 
-            marker.options.photoUrl = imgUrl; // Save photo url for cluster popup
-
             marker.on("mouseover", () => {
               if (currentOpenPopup && currentOpenPopup !== marker) {
                 currentOpenPopup.closePopup();
@@ -381,8 +366,8 @@
               marker.openPopup();
               currentOpenPopup = marker;
             });
-
-            marker.on("click", () => {}); // Empty click handler as before
+            
+            marker.on("click", () => {});
 
             markersClusterGroup.addLayer(marker);
             markers.push(marker);
@@ -394,24 +379,15 @@
         const markersInCluster = e.layer.getAllChildMarkers();
         let popupContent = "<strong>Events here:</strong><br><br>";
         markersInCluster.forEach((m) => {
-          const contentWithoutPhoto = m.getPopup().getContent().replace(/<div style="text-align:center; margin-bottom:8px;">.*?<\/div>/, "");
-          const photoUrl = m.options.photoUrl || DEFAULT_IMAGE;
-          const photoHtml = photoUrl
-            ? `<div style="text-align:center; margin-bottom:8px;">
-                 <img src="${photoUrl}" alt="Event Photo" style="max-width:200px; max-height:120px; border-radius:8px; object-fit:cover;">
-               </div>`
-            : "";
-          popupContent += photoHtml + contentWithoutPhoto + "<hr>";
+          popupContent += m.getPopup().getContent() + "<hr>";
         });
         popupContent = popupContent.replace(/<hr>$/, "");
-        e.layer.bindPopup(popupContent).openPopup();
         if (currentOpenPopup && currentOpenPopup !== e.layer) {
           currentOpenPopup.closePopup();
         }
+        e.layer.bindPopup(popupContent).openPopup();
         currentOpenPopup = e.layer;
       });
-
-      // Removed clustermouseout so popup stays open until another hover
 
       markersClusterGroup.on("clusterclick", function (e) {
         e.originalEvent.preventDefault();
@@ -419,131 +395,116 @@
         const markersInCluster = e.layer.getAllChildMarkers();
         let popupContent = "<strong>Events here:</strong><br><br>";
         markersInCluster.forEach((m) => {
-          const contentWithoutPhoto = m.getPopup().getContent().replace(/<div style="text-align:center; margin-bottom:8px;">.*?<\/div>/, "");
-          const photoUrl = m.options.photoUrl || DEFAULT_IMAGE;
-          const photoHtml = photoUrl
-            ? `<div style="text-align:center; margin-bottom:8px;">
-                 <img src="${photoUrl}" alt="Event Photo" style="max-width:200px; max-height:120px; border-radius:8px; object-fit:cover;">
-               </div>`
-            : "";
-          popupContent += photoHtml + contentWithoutPhoto + "<hr>";
+          popupContent += m.getPopup().getContent() + "<hr>";
         });
         popupContent = popupContent.replace(/<hr>$/, "");
-        L.popup().setLatLng(e.layer.getLatLng()).setContent(popupContent).openOn(map);
+        L.popup().setLatLng(e.latlng).setContent(popupContent).openOn(map);
       });
 
-      // Calendar generation, event filtering, and CSV parsing code unchanged from your original script
-      // ... Insert your existing calendar and CSV load logic here ...
+      function buildCalendar(year, month) {
+        calendarGrid.innerHTML = "";
+        const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        dayLabels.forEach((label) => {
+          const labelEl = document.createElement("div");
+          labelEl.textContent = label;
+          labelEl.className = "day-label";
+          calendarGrid.appendChild(labelEl);
+        });
 
-      // For brevity, only showing key parts related to your question
-      // Let me know if you want the entire calendar and CSV logic pasted as well
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
+        monthYear.textContent = `${monthName} ${year}`;
 
-      // Load CSV, parse events, and initialize calendar & map markers
+        for (let i = 0; i < firstDay; i++) {
+          calendarGrid.appendChild(document.createElement("div"));
+        }
+
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const cell = document.createElement("div");
+          cell.className = "day";
+          cell.textContent = day;
+          const isToday =
+            today.getDate() === day &&
+            today.getMonth() === month &&
+            today.getFullYear() === year;
+          if (isToday) cell.classList.add("today");
+
+          if (
+            selectedDayEl &&
+            selectedDayEl.dataset.year == year &&
+            selectedDayEl.dataset.month == month &&
+            selectedDayEl.textContent == day
+          ) {
+            cell.classList.add("selected");
+            selectedDayEl = cell;
+          }
+
+          cell.onclick = async () => {
+            if (selectedDayEl) selectedDayEl.classList.remove("selected");
+            cell.classList.add("selected");
+            selectedDayEl = cell;
+            selectedDayEl.dataset.year = year;
+            selectedDayEl.dataset.month = month;
+
+            loadingOverlay.style.display = "flex";
+
+            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const matches = events.filter((e) => e.date === clicked);
+            await showEventsOnMap(matches);
+            loadingOverlay.style.display = "none";
+
+            map.setView(defaultCenter, defaultZoom, { animate: false });
+          };
+
+          calendarGrid.appendChild(cell);
+        }
+      }
+
+
+
+      function setupNavigation() {
+        document.getElementById("prevMonth").onclick = () => {
+          currentMonth--;
+          if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+          }
+          buildCalendar(currentYear, currentMonth);
+        };
+        document.getElementById("nextMonth").onclick = () => {
+          currentMonth++;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+          }
+          buildCalendar(currentYear, currentMonth);
+        };
+      }
+
       Papa.parse(SHEET_CSV_URL, {
         download: true,
         header: true,
-        complete: (results) => {
-          events = results.data.map(e => ({
-            name: e["Event Name"] || "",
-            address: e["Address"] || "",
-            date: normalizeDate(e["Date"]),
-            time: e["Time"] || "",
-            venue: e["Venue"] || "",
-            website: e["Website"] || "",
-            phone: e["Phone"] || "",
-            photo: extractImageUrl(e["Photo"]) || DEFAULT_IMAGE,
+        complete: async function (results) {
+          loadingOverlay.style.display = "flex";
+          events = results.data.map((row) => ({
+            name: row["Name"] || "",
+            address: row["Address"] || "",
+            date: normalizeDate(row["Date"]),
+            time: row["Time"] || "",
+            website: row["Band Website"] || "",
+            venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "",
+            phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "",
+            bandPicture: row["Picture URL"] || "",
           }));
           const today = new Date();
           currentYear = today.getFullYear();
           currentMonth = today.getMonth();
           buildCalendar(currentYear, currentMonth);
-          filterAndShowEvents(currentYear, currentMonth);
+          setupNavigation();
           loadingOverlay.style.display = "none";
         },
-        error: (err) => {
-          console.error("CSV load error:", err);
-          loadingOverlay.style.display = "none";
-        }
-      });
-
-      function buildCalendar(year, month) {
-        monthYear.textContent = new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" });
-        calendarGrid.innerHTML = "";
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const startDayOfWeek = firstDay.getDay();
-        const totalDays = lastDay.getDate();
-
-        // Day labels
-        const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        dayLabels.forEach(d => {
-          const lbl = document.createElement("div");
-          lbl.className = "day-label";
-          lbl.textContent = d;
-          calendarGrid.appendChild(lbl);
-        });
-
-        // Empty cells before first day
-        for (let i = 0; i < startDayOfWeek; i++) {
-          const emptyCell = document.createElement("div");
-          emptyCell.className = "day empty";
-          calendarGrid.appendChild(emptyCell);
-        }
-
-        // Days
-        for (let day = 1; day <= totalDays; day++) {
-          const dayCell = document.createElement("div");
-          dayCell.className = "day";
-          dayCell.textContent = day;
-          const dateStr = `${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-
-          if (dateStr === new Date().toISOString().slice(0,10)) {
-            dayCell.classList.add("today");
-          }
-
-          dayCell.addEventListener("click", () => {
-            if (selectedDayEl) selectedDayEl.classList.remove("selected");
-            dayCell.classList.add("selected");
-            selectedDayEl = dayCell;
-            filterAndShowEvents(year, month, day);
-          });
-
-          calendarGrid.appendChild(dayCell);
-        }
-      }
-
-      function filterAndShowEvents(year, month, day = null) {
-        let filtered;
-        if (day === null) {
-          filtered = events.filter(e => {
-            if (!e.date) return false;
-            const eventDate = new Date(e.date);
-            return eventDate.getFullYear() === year && eventDate.getMonth() === month;
-          });
-        } else {
-          filtered = events.filter(e => e.date === `${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`);
-        }
-        showEventsOnMap(filtered);
-      }
-
-      document.getElementById("prevMonth").addEventListener("click", () => {
-        currentMonth--;
-        if (currentMonth < 0) {
-          currentMonth = 11;
-          currentYear--;
-        }
-        buildCalendar(currentYear, currentMonth);
-        filterAndShowEvents(currentYear, currentMonth);
-      });
-
-      document.getElementById("nextMonth").addEventListener("click", () => {
-        currentMonth++;
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
-        buildCalendar(currentYear, currentMonth);
-        filterAndShowEvents(currentYear, currentMonth);
       });
     });
   </script>
