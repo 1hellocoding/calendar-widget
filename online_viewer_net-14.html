@@ -263,7 +263,7 @@
       let events = [],
         markers = [],
         markerMap = {},
-        selectedDayEl = null,
+        selectedDate = null,
         currentYear,
         currentMonth;
 
@@ -353,7 +353,13 @@
             const imageUrl = event.bandPicture || DEFAULT_BAND_PICTURE;
 
             const popupContent = `
-              <img src="${imageUrl}" alt="${event.name}" style="width:100%; max-width:150px; display:block; margin:0 auto 10px; border-radius: 8px;">
+              <img 
+                src="${imageUrl}" 
+                alt="${event.name}" 
+                referrerpolicy="no-referrer" 
+                style="width:100%; max-width:150px; display:block; margin:0 auto 10px; border-radius: 8px;"
+                onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';"
+              >
               <strong>${event.name}</strong><br>
               ${event.website ? `Band Website: <a href="${event.website}" target="_blank">Click me</a><br>` : ""}
               ${timeFormatted ? `Start Time: ${timeFormatted}<br>` : ""}
@@ -380,7 +386,6 @@
         markersClusterGroup.addLayers(markers);
       }
 
-      // When a cluster is clicked, spiderfy it to show the individual markers
       markersClusterGroup.on("clusterclick", function (e) {
         e.layer.spiderfy();
       });
@@ -409,33 +414,25 @@
           const cell = document.createElement("div");
           cell.className = "day";
           cell.textContent = day;
+
+          const thisDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
           const isToday =
             today.getDate() === day &&
             today.getMonth() === month &&
             today.getFullYear() === year;
           if (isToday) cell.classList.add("today");
-
-          if (
-            selectedDayEl &&
-            selectedDayEl.dataset.year == year &&
-            selectedDayEl.dataset.month == month &&
-            selectedDayEl.textContent == day
-          ) {
+          
+          if (selectedDate === thisDate) {
             cell.classList.add("selected");
-            selectedDayEl = cell;
           }
 
           cell.onclick = async () => {
-            if (selectedDayEl) selectedDayEl.classList.remove("selected");
-            cell.classList.add("selected");
-            selectedDayEl = cell;
-            selectedDayEl.dataset.year = year;
-            selectedDayEl.dataset.month = month;
+            selectedDate = thisDate;
+            buildCalendar(currentYear, currentMonth);
 
             loadingOverlay.style.display = "flex";
-
-            const clicked = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const matches = events.filter((e) => e.date === clicked);
+            const matches = events.filter((e) => e.date === selectedDate);
             await showEventsOnMap(matches);
             loadingOverlay.style.display = "none";
 
