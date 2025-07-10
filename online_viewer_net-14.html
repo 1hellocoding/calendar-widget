@@ -116,7 +116,7 @@
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      bottom: -9px; /* MODIFIED */
+      bottom: -9px;
       width: 17px;
       height: 9px;
       overflow: hidden;
@@ -131,14 +131,14 @@
       border-top: none;
       border-left: none;
       transform: rotate(45deg);
-      margin: -9px auto 0; /* MODIFIED */
+      margin: -9px auto 0;
     }
     
     /* Alternative tip position for offset popups */
     .custom-popup.offset-left .custom-popup-tip-container {
       left: 20px;
       transform: translateX(0);
-      bottom: -9px; /* MODIFIED */
+      bottom: -9px;
     }
     
     .custom-popup.offset-left .custom-popup-tip {
@@ -543,6 +543,7 @@
 
       function normalizeDate(input) { if (!input) return null; const parts = input.trim().split(/[\/\-]/); let [y, m, d] = parts.length === 3 ? parts : [null, null, null]; if (y && y.length !== 4) [m, d, y] = parts; return y && m && d ? `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`: null; }
       function formatTime12h(timeStr) { if (!timeStr || typeof timeStr !== "string") return ""; timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1"); if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) { return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1"); } const match = timeStr.match(/^(\d{1,2}):(\d{2})$/); if (!match) return timeStr; let [, hourStr, minuteStr] = match; let hour = parseInt(hourStr, 10); const ampm = hour >= 12 ? "PM" : "AM"; hour = hour % 12; if (hour === 0) hour = 12; return `${hour}:${minuteStr} ${ampm}`; }
+      function formatDateForDisplay(dateStr) { if (!dateStr) return ""; const [year, month, day] = dateStr.split('-'); return `${month}/${day}/${year}`; }
       async function geocodeAddress(address) { if (address in markerMap) return markerMap[address]; try { const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`); const res = await fetch(url); const data = await res.json(); if (data.length > 0) { const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }; markerMap[address] = coords; return coords; } } catch (e) { console.error("Geocoding failed:", e); } return null; }
 
       async function showEventsOnMap(matches) {
@@ -566,7 +567,7 @@
               ${eventNameHtml}
               <div class="custom-popup-info">
                 ${timeFormatted ? `<div>${timeFormatted}</div>` : ""}
-                ${event.date ? `<div>${event.date}</div>` : ""}
+                ${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}
                 ${event.venue ? `<div>${event.venue}</div>` : ""}
                 <div>${event.address}</div>
                 ${event.phone ? `<div>${event.phone}</div>` : ""}
@@ -694,6 +695,30 @@
         document.getElementById("prevMonth").onclick = () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } buildCalendar(currentYear, currentMonth); };
         document.getElementById("nextMonth").onclick = () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } buildCalendar(currentYear, currentMonth); };
       }
+      
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+      
+      function refitMap() {
+        if (markers && markers.length > 0) {
+          const markerBounds = L.featureGroup(markers).getBounds();
+          map.fitBounds(markerBounds, {
+              paddingTopLeft: [310, 330],
+              paddingBottomRight: [150, 80]
+          });
+        }
+      }
+
+      window.addEventListener('resize', debounce(refitMap, 250));
 
       Papa.parse(SHEET_CSV_URL, {
         download: true,
