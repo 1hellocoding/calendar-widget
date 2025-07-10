@@ -32,6 +32,24 @@
       flex-direction: column;
       overflow: visible;
       height: auto;
+      transition: background-color 0.2s;
+    }
+    #notification-banner {
+      position: fixed;
+      top: -100px; /* Initially hidden above the screen */
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      background-color: white;
+      color: red;
+      font-weight: bold;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      z-index: 99999;
+      transition: top 0.5s ease-in-out;
+    }
+    #notification-banner.show {
+      top: 20px; /* Slides into view */
     }
     @media (max-width: 480px) {
       .calendar {
@@ -156,20 +174,26 @@
       margin-bottom: 15px;
       fill: #3b82f6;
     }
-    .marker-cluster-small {
-      background-color: #3b82f6 !important;
-      border: 2px solid #60a5fa !important;
+    .custom-cluster-pin {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      width: 40px !important;
+      height: 40px !important;
+      position: relative;
+      border: none;
+      background-color: transparent !important;
     }
-    .marker-cluster-medium {
-      background-color: #1e40af !important;
-      border: 2px solid #3b82f6 !important;
-    }
-    .marker-cluster-large {
-      background-color: #1e3a8a !important;
-      border: 2px solid #2563eb !important;
-    }
-    .marker-cluster div {
-      background-color: rgba(147,197,253,0.6) !important;
+    .custom-cluster-pin span {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      text-shadow: 0 0 3px rgba(0,0,0,0.5);
     }
     .leaflet-control-zoom {
       background: transparent !important;
@@ -227,6 +251,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 </head>
 <body>
+  <div id="notification-banner">No events for this date</div>
   <div id="map"></div>
   <div class="calendar">
     <div class="calendar-header">
@@ -255,14 +280,15 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      const SHEET_CSV_URL =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
+      const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
       const NOMINATIM_PROXY = "https://corsproxy.io/?";
-      const DEFAULT_BAND_PICTURE = "https://i.postimg.cc/Jht8Lqt0/temp-Image-U5czf-J.avif";
+      const DEFAULT_BAND_PICTURE = "https://i.postimg.cc/X7Rc0MNC/temp-Image-Xyc3fg.avif";
 
       const loadingOverlay = document.getElementById("loadingOverlay");
+      const calendarEl = document.querySelector(".calendar");
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
+      const notificationBanner = document.getElementById("notification-banner");
       let events = [],
         markers = [],
         markerMap = {},
@@ -287,112 +313,136 @@
       map.zoomControl.setPosition('topright');
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
+      const singlePinIcon = L.icon({
+          iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6" fill-rule="evenodd"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 11.5C10.62 11.5 9.5 10.38 9.5 9S10.62 6.5 12 6.5 14.5 7.62 14.5 9 13.38 11.5 12 11.5z"/></svg>',
+          iconSize: [40, 40],
+          iconAnchor: [20, 40],
+          popupAnchor: [0, -40]
+      });
+
       const markersClusterGroup = L.markerClusterGroup({
         zoomToBoundsOnClick: false,
+        iconCreateFunction: function(cluster) {
+          const count = cluster.getChildCount();
+          return L.divIcon({
+            html: `<span>${count}</span>`,
+            className: 'custom-cluster-pin',
+            iconSize: L.point(40, 40, true),
+          });
+        }
       });
       map.addLayer(markersClusterGroup);
 
       let currentOpenPopup = null;
+      let popupCloseTimer = null;
+      let unspiderfyTimer = null;
 
-      function normalizeDate(input) {
-        if (!input) return null;
-        const parts = input.trim().split(/[\/\-]/);
-        let [y, m, d] = parts.length === 3 ? parts : [null, null, null];
-        if (y && y.length !== 4) [m, d, y] = parts;
-        return y && m && d
-          ? `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
-          : null;
-      }
-
-      function formatTime12h(timeStr) {
-        if (!timeStr || typeof timeStr !== "string") return "";
-        timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1");
-        if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) {
-          return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1");
-        }
-        const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-        if (!match) return timeStr;
-        let [, hourStr, minuteStr] = match;
-        let hour = parseInt(hourStr, 10);
-        const ampm = hour >= 12 ? "PM" : "AM";
-        hour = hour % 12;
-        if (hour === 0) hour = 12;
-        return `${hour}:${minuteStr} ${ampm}`;
-      }
-
-      async function geocodeAddress(address) {
-        if (address in markerMap) return markerMap[address];
-        try {
-          const url = NOMINATIM_PROXY + encodeURIComponent(
-            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`
-          );
-          const res = await fetch(url);
-          const data = await res.json();
-          if (data.length > 0) {
-            const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-            markerMap[address] = coords;
-            return coords;
-          }
-        } catch (e) {
-          console.error("Geocoding failed:", e);
-        }
-        return null;
-      }
+      function normalizeDate(input) { if (!input) return null; const parts = input.trim().split(/[\/\-]/); let [y, m, d] = parts.length === 3 ? parts : [null, null, null]; if (y && y.length !== 4) [m, d, y] = parts; return y && m && d ? `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`: null; }
+      function formatTime12h(timeStr) { if (!timeStr || typeof timeStr !== "string") return ""; timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1"); if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) { return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1"); } const match = timeStr.match(/^(\d{1,2}):(\d{2})$/); if (!match) return timeStr; let [, hourStr, minuteStr] = match; let hour = parseInt(hourStr, 10); const ampm = hour >= 12 ? "PM" : "AM"; hour = hour % 12; if (hour === 0) hour = 12; return `${hour}:${minuteStr} ${ampm}`; }
+      async function geocodeAddress(address) { if (address in markerMap) return markerMap[address]; try { const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`); const res = await fetch(url); const data = await res.json(); if (data.length > 0) { const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }; markerMap[address] = coords; return coords; } } catch (e) { console.error("Geocoding failed:", e); } return null; }
 
       async function showEventsOnMap(matches) {
         markersClusterGroup.clearLayers();
         markers = [];
-        
-        const geocodePromises = matches.map(event => {
-            if (!event.address) return Promise.resolve(null);
-            return geocodeAddress(event.address).then(coords => ({ ...event, coords }));
-        });
-
+        const geocodePromises = matches.map(event => geocodeAddress(event.address).then(coords => ({ ...event, coords })));
         const eventsWithCoords = await Promise.all(geocodePromises);
 
         for (const event of eventsWithCoords) {
           if (event && event.coords) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
-            const imageUrl = event.bandPicture || DEFAULT_BAND_PICTURE;
+            const imageUrl = DEFAULT_BAND_PICTURE;
 
-            const popupContent = `
-              <img 
-                src="${imageUrl}" 
-                alt="${event.name}" 
-                referrerpolicy="no-referrer" 
-                style="width:100%; max-width:150px; display:block; margin:0 auto 10px; border-radius: 8px;"
-                onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';"
-              >
-              <strong>${event.name}</strong><br>
-              ${event.website ? `Band Website: <a href="${event.website}" target="_blank">Click me</a><br>` : ""}
-              ${timeFormatted ? `Start Time: ${timeFormatted}<br>` : ""}
-              ${event.date ? `Start Date: ${event.date}<br>` : ""}
-              ${event.venue ? `Venue: ${event.venue}<br>` : ""}
-              ${event.address}<br>
-              ${event.phone ? `Venue Phone: ${event.phone}` : ""}
-            `;
-            const marker = L.marker([event.coords.lat, event.coords.lng]).bindPopup(popupContent);
+            let eventNameHtml = `<strong>${event.name}</strong>`;
+            if (event.website) {
+              eventNameHtml = `<a href="${event.website}" target="_blank" style="text-decoration: none; color: inherit;">${eventNameHtml}</a>`;
+            }
 
-            marker.on("mouseover", () => {
-              if (currentOpenPopup && currentOpenPopup !== marker) {
+            const popupContent = `<img src="${imageUrl}" alt="${event.name}" referrerpolicy="no-referrer" style="width:100%; max-width:150px; display:block; margin:0 auto 10px; border-radius: 8px;" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<br>${timeFormatted ? `${timeFormatted}<br>` : ""}${event.date ? `${event.date}<br>` : ""}${event.venue ? `${event.venue}<br>` : ""}${event.address}<br>${event.phone ? `${event.phone}` : ""}`;
+            
+            const marker = L.marker([event.coords.lat, event.coords.lng], { icon: singlePinIcon });
+
+            marker.on("mouseover", function () {
+              clearTimeout(unspiderfyTimer);
+              clearTimeout(popupCloseTimer);
+              if (currentOpenPopup && currentOpenPopup !== this) {
                 currentOpenPopup.closePopup();
               }
-              marker.openPopup();
-              currentOpenPopup = marker;
+
+              const calendarRect = calendarEl.getBoundingClientRect();
+              const markerPoint = map.latLngToContainerPoint(this.getLatLng());
+
+              let popupOptions = {}; 
+              calendarEl.style.backgroundColor = 'white'; 
+
+              if (
+                markerPoint.x < calendarRect.right &&
+                markerPoint.y < calendarRect.bottom &&
+                markerPoint.x > calendarRect.left &&
+                markerPoint.y > calendarRect.top
+              ) {
+                popupOptions.offset = [150, 0]; 
+                calendarEl.style.backgroundColor = '#ffdddd';
+              }
+              
+              this.bindPopup(popupContent, popupOptions).openPopup();
+              currentOpenPopup = this;
+            });
+
+            marker.on("mouseout", () => {
+              popupCloseTimer = setTimeout(() => marker.closePopup(), 300);
+              const parent = markersClusterGroup.getVisibleParent(marker);
+              if (parent) {
+                  unspiderfyTimer = setTimeout(() => parent.unspiderfy(), 300);
+              }
+              calendarEl.style.backgroundColor = 'white';
             });
             
-            marker.on("click", () => {});
+            marker.on('popupopen', (e) => {
+              const popupEl = e.popup.getElement();
+              popupEl.addEventListener('mouseenter', () => {
+                clearTimeout(unspiderfyTimer);
+                clearTimeout(popupCloseTimer);
+              });
+              popupEl.addEventListener('mouseleave', () => {
+                popupCloseTimer = setTimeout(() => marker.closePopup(), 300);
+                const parent = markersClusterGroup.getVisibleParent(marker);
+                if (parent) {
+                    unspiderfyTimer = setTimeout(() => parent.unspiderfy(), 300);
+                }
+              });
+            });
 
+            marker.on("click", () => {});
             markers.push(marker);
           }
         }
         markersClusterGroup.addLayers(markers);
       }
 
-      markersClusterGroup.on("clusterclick", function (e) {
+      markersClusterGroup.on("clusterclick clustermouseover", function (e) {
+        clearTimeout(unspiderfyTimer);
         e.layer.spiderfy();
       });
 
+      async function loadEventsForDate(dateString) {
+        selectedDate = dateString;
+        buildCalendar(currentYear, currentMonth);
+        loadingOverlay.style.display = "flex";
+        
+        const matches = events.filter((e) => e.date === selectedDate);
+        
+        if (matches.length === 0) {
+          notificationBanner.classList.add("show");
+          setTimeout(() => {
+            notificationBanner.classList.remove("show");
+          }, 3000);
+        }
+        
+        await showEventsOnMap(matches);
+        loadingOverlay.style.display = "none";
+        map.setView(defaultCenter, defaultZoom, { animate: false });
+      }
+      
       function buildCalendar(year, month) {
         calendarGrid.innerHTML = "";
         const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -417,52 +467,20 @@
           const cell = document.createElement("div");
           cell.className = "day";
           cell.textContent = day;
-
           const thisDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-          const isToday =
-            today.getDate() === day &&
-            today.getMonth() === month &&
-            today.getFullYear() === year;
+          const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
           if (isToday) cell.classList.add("today");
-          
           if (selectedDate === thisDate) {
             cell.classList.add("selected");
           }
-
-          cell.onclick = async () => {
-            selectedDate = thisDate;
-            buildCalendar(currentYear, currentMonth);
-
-            loadingOverlay.style.display = "flex";
-            const matches = events.filter((e) => e.date === selectedDate);
-            await showEventsOnMap(matches);
-            loadingOverlay.style.display = "none";
-
-            map.setView(defaultCenter, defaultZoom, { animate: false });
-          };
-
+          cell.onclick = () => loadEventsForDate(thisDate);
           calendarGrid.appendChild(cell);
         }
       }
 
       function setupNavigation() {
-        document.getElementById("prevMonth").onclick = () => {
-          currentMonth--;
-          if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-          }
-          buildCalendar(currentYear, currentMonth);
-        };
-        document.getElementById("nextMonth").onclick = () => {
-          currentMonth++;
-          if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-          }
-          buildCalendar(currentYear, currentMonth);
-        };
+        document.getElementById("prevMonth").onclick = () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } buildCalendar(currentYear, currentMonth); };
+        document.getElementById("nextMonth").onclick = () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } buildCalendar(currentYear, currentMonth); };
       }
 
       Papa.parse(SHEET_CSV_URL, {
@@ -470,22 +488,21 @@
         header: true,
         complete: async function (results) {
           loadingOverlay.style.display = "flex";
-          events = results.data.map((row) => ({
-            name: row["Name"] || "",
-            address: row["Address"] || "",
-            date: normalizeDate(row["Date"]),
-            time: row["Time"] || "",
-            website: row["Band Website"] || "",
-            venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "",
-            phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "",
-            bandPicture: row["Picture URL"] || "",
-          }));
+          events = results.data.map((row) => ({ name: row["Name"] || "", address: row["Address"] || "", date: normalizeDate(row["Date"]), time: row["Time"] || "", website: row["Band Website"] || "", venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "", phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "", bandPicture: "" }));
+          
           const today = new Date();
           currentYear = today.getFullYear();
           currentMonth = today.getMonth();
+          
           buildCalendar(currentYear, currentMonth);
           setupNavigation();
-          loadingOverlay.style.display = "none";
+          
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, "0");
+          const day = String(today.getDate()).padStart(2, "0");
+          const todaysDateString = `${year}-${month}-${day}`;
+          
+          await loadEventsForDate(todaysDateString);
         },
       });
     });
