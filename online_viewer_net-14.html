@@ -35,7 +35,7 @@
       transition: background-color 0.2s;
     }
     
-    /* Custom Popup Styles - Enhanced for better text visibility */
+    /* Custom Popup Styles */
     .custom-popup-container {
       position: absolute;
       z-index: 15000;
@@ -134,7 +134,6 @@
       margin: -9px auto 0;
     }
     
-    /* Alternative tip position for offset popups */
     .custom-popup.offset-left .custom-popup-tip-container {
       left: 20px;
       transform: translateX(0);
@@ -175,46 +174,13 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         overflow: visible;
       }
-      #map {
-        height: 100vh;
-      }
-      .calendar-header {
-        font-size: 1.12em;
-        margin-bottom: 8px;
-      }
-      .calendar-grid {
-        gap: 5px;
-        margin-bottom: 8px;
-      }
-      .day {
-        width: 26px;
-        height: 26px;
-        font-size: 0.68em;
-        padding: 0;
-      }
-      .calendar-header button {
-        font-size: 1.44em;
-        padding: 0 11px;
-      }
-      
-      /* Mobile popup adjustments */
-      .custom-popup {
-        width: 280px;
-        min-height: 320px;
-        font-size: 14px;
-      }
-      
-      .custom-popup-content {
-        padding: 15px;
-      }
-      
-      .custom-popup-content strong {
-        font-size: 15px;
-      }
-      
-      .custom-popup-info {
-        font-size: 13px;
-      }
+      #map { height: 100vh; }
+      .calendar-header, .custom-popup-content strong, .custom-popup-info { font-size: 1.1em; }
+      .calendar-grid { gap: 5px; margin-bottom: 8px; }
+      .day { width: 26px; height: 26px; font-size: 0.68em; padding: 0; }
+      .calendar-header button { font-size: 1.44em; padding: 0 11px; }
+      .custom-popup { width: 280px; min-height: 320px; font-size: 14px; }
+      .custom-popup-content { padding: 15px; }
     }
     .calendar-header {
       font-size: 1.12em;
@@ -226,161 +192,82 @@
       align-items: center;
     }
     .calendar-header button {
-      background: none;
-      border: none;
-      font-size: 1.2em;
-      cursor: pointer;
-      color: #3b82f6;
-      user-select: none;
-      padding: 0 8px;
-      transition: color 0.2s;
+      background: none; border: none; font-size: 1.2em;
+      cursor: pointer; color: #3b82f6; user-select: none;
+      padding: 0 8px; transition: color 0.2s;
     }
-    .calendar-header button:hover {
-      color: #1d4ed8;
-    }
+    .calendar-header button:hover { color: #1d4ed8; }
     .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6.4px;
-      margin-bottom: 12.8px;
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 6.4px; margin-bottom: 12.8px;
     }
     .calendar-grid .day-label {
-      text-align: center;
-      font-size: 0.68em;
-      font-weight: bold;
-      color: #64748b;
+      text-align: center; font-size: 0.68em;
+      font-weight: bold; color: #64748b;
     }
     .day {
-      background: #d1d5db;
-      color: #111827;
-      width: 32px;
-      height: 32px;
-      border-radius: 40%;
-      cursor: pointer;
-      font-size: 0.76em;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      padding: 0;
+      background: #d1d5db; color: #111827;
+      width: 32px; height: 32px; border-radius: 40%;
+      cursor: pointer; font-size: 0.76em; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 0;
     }
     .day:hover {
-      background: #dbeafe;
-      color: #1e3a8a;
-      transform: scale(1.05);
+      background: #dbeafe; color: #1e3a8a; transform: scale(1.05);
     }
     .day.selected {
-      background: linear-gradient(135deg, #3b82f6, #60a5fa);
-      color: white;
-      font-weight: bold;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white;
+      font-weight: bold; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
       transform: scale(1.1);
     }
-    .day.today {
-      border: 2px solid #3b82f6;
-    }
+    .day.today { border: 2px solid #3b82f6; }
     #loadingOverlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.9);
-      z-index: 20000;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      font-size: 1.2em;
-      color: #3b82f6;
-      user-select: none;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.9); z-index: 20000;
+      display: none; justify-content: center; align-items: center;
+      flex-direction: column; font-size: 1.2em; color: #3b82f6; user-select: none;
     }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     #loadingMicrophone {
-      width: 80px;
-      height: 80px;
-      animation: spin 2s linear infinite;
-      margin-bottom: 15px;
-      fill: #3b82f6;
+      width: 80px; height: 80px; animation: spin 2s linear infinite;
+      margin-bottom: 15px; fill: #3b82f6;
     }
     .custom-cluster-pin {
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      width: 40px !important;
-      height: 40px !important;
-      position: relative;
-      border: none;
-      background-color: transparent !important;
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+      width: 40px !important; height: 40px !important; position: relative;
+      border: none; background-color: transparent !important; cursor: pointer;
     }
     .custom-cluster-pin span {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-      text-shadow: 0 0 3px rgba(0,0,0,0.5);
+      position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+      color: white; font-size: 12px; font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.5);
     }
     .leaflet-control-zoom {
-      background: transparent !important;
-      box-shadow: none !important;
-      border: none !important;
-      padding: 0 !important;
-      width: auto !important;
+      background: transparent !important; box-shadow: none !important;
+      border: none !important; padding: 0 !important; width: auto !important;
     }
     .leaflet-control-zoom a {
-      width: 44px !important;
-      height: 44px !important;
-      border-radius: 50% !important;
+      width: 44px !important; height: 44px !important; border-radius: 50% !important;
       background: linear-gradient(135deg, #3b82f6, #60a5fa) !important;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-      color: white !important;
-      font-weight: bold;
-      font-size: 28px;
-      text-align: center;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      border: none !important;
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      box-sizing: border-box;
-      text-decoration: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      line-height: normal !important;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); color: white !important;
+      font-weight: bold; font-size: 28px; text-align: center; cursor: pointer;
+      user-select: none; transition: background 0.3s ease, box-shadow 0.3s ease;
+      border: none !important; display: flex !important; justify-content: center !important;
+      align-items: center !important; box-sizing: border-box; text-decoration: none !important;
+      padding: 0 !important; margin: 0 !important; line-height: normal !important;
     }
-    .leaflet-control-zoom a.leaflet-control-zoom-in {
-      margin-bottom: 8px !important;
-    }
+    .leaflet-control-zoom a.leaflet-control-zoom-in { margin-bottom: 8px !important; }
     .leaflet-control-zoom a:hover {
       background: linear-gradient(135deg, #2563eb, #3b82f6);
       box-shadow: 0 4px 14px rgba(37, 99, 235, 0.7);
     }
-    .leaflet-control-zoom a::before {
-      font-size: 28px;
-      font-weight: bold;
-      color: white !important;
-    }
+    .leaflet-control-zoom a::before { font-size: 28px; font-weight: bold; color: white !important; }
     .leaflet-control-zoom-out::before {
-      background: none !important;
-      box-shadow: none !important;
-      text-shadow: none !important;
-      border: none !important;
-      color: white !important;
+      background: none !important; box-shadow: none !important; text-shadow: none !important;
+      border: none !important; color: white !important;
     }
-    
-    /* Hide original leaflet popups */
-    .leaflet-popup {
-      display: none !important;
-    }
+    .leaflet-popup { display: none !important; }
   </style>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -412,7 +299,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script defer src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script defer src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
+  
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1813652457&single=true&output=csv";
@@ -424,25 +311,14 @@
       const calendarGrid = document.getElementById("calendarGrid");
       const monthYear = document.getElementById("monthYear");
       const notificationBanner = document.getElementById("notification-banner");
-      let events = [],
-        markers = [],
-        markerMap = {},
-        selectedDate = null,
-        currentYear,
-        currentMonth;
-
+      let events = [], markerMap = {}, selectedDate = null, currentYear, currentMonth;
+        
       const defaultCenter = [41.04, -72.3];
       const defaultZoom = 10.78;
       const map = L.map("map", {
-        zoomControl: true,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        boxZoom: false,
-        keyboard: false,
-        touchZoom: false,
-        tap: false,
-        zoomSnap: 0,
+        zoomControl: true, dragging: false, scrollWheelZoom: false,
+        doubleClickZoom: false, boxZoom: false, keyboard: false,
+        touchZoom: false, tap: false, zoomSnap: 0,
       }).setView(defaultCenter, defaultZoom);
 
       map.zoomControl.setPosition('topright');
@@ -450,208 +326,181 @@
 
       const singlePinIcon = L.icon({
           iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6" fill-rule="evenodd"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 11.5C10.62 11.5 9.5 10.38 9.5 9S10.62 6.5 12 6.5 14.5 7.62 14.5 9 13.38 11.5 12 11.5z"/></svg>',
-          iconSize: [40, 40],
-          iconAnchor: [20, 40],
-          popupAnchor: [0, -40]
+          iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
       });
 
       const markersClusterGroup = L.markerClusterGroup({
         zoomToBoundsOnClick: false,
+        maxClusterRadius: 1, 
         iconCreateFunction: function(cluster) {
-          const count = cluster.getChildCount();
           return L.divIcon({
-            html: `<span>${count}</span>`,
+            html: `<span>${cluster.getChildCount()}</span>`,
             className: 'custom-cluster-pin',
             iconSize: L.point(40, 40, true),
           });
         }
-      });
-      map.addLayer(markersClusterGroup);
-
+      }).addTo(map);
+      
       let currentOpenPopup = null;
       let popupCloseTimer = null;
       let unspiderfyTimer = null;
 
-      // Custom Popup System
       function createCustomPopup(content, latLng, offset = [0, 0]) {
         const popupContainer = document.createElement('div');
         popupContainer.className = 'custom-popup-container';
-        
         const popup = document.createElement('div');
         popup.className = 'custom-popup';
-        
-        if (offset[0] !== 0) {
-          popup.classList.add('offset-left');
-        }
-        
+        if (offset[0] !== 0) { popup.classList.add('offset-left'); }
         const popupContent = document.createElement('div');
         popupContent.className = 'custom-popup-content';
         popupContent.innerHTML = content;
-        
         const tipContainer = document.createElement('div');
         tipContainer.className = 'custom-popup-tip-container';
-        
         const tip = document.createElement('div');
         tip.className = 'custom-popup-tip';
-        
         tipContainer.appendChild(tip);
         popup.appendChild(popupContent);
         popup.appendChild(tipContainer);
         popupContainer.appendChild(popup);
-        
         document.body.appendChild(popupContainer);
-        
-        // Position the popup
         const markerPoint = map.latLngToContainerPoint(latLng);
         const popupWidth = popup.offsetWidth;
         const popupHeight = popup.offsetHeight;
-        
         let left = markerPoint.x - popupWidth / 2 + offset[0];
-        let top = markerPoint.y - popupHeight - 40; // 40px above marker
-        
+        let top = markerPoint.y - popupHeight - 40; 
         popupContainer.style.left = left + 'px';
         popupContainer.style.top = top + 'px';
-        
-        // Add hover events
-        popupContainer.addEventListener('mouseenter', () => {
-          clearTimeout(popupCloseTimer);
-          clearTimeout(unspiderfyTimer);
-        });
-        
-        popupContainer.addEventListener('mouseleave', () => {
-          popupCloseTimer = setTimeout(() => {
-            closeCustomPopup();
-          }, 300);
-        });
-        
+        popupContainer.addEventListener('mouseenter', () => { clearTimeout(popupCloseTimer); clearTimeout(unspiderfyTimer); });
+        popupContainer.addEventListener('mouseleave', () => { popupCloseTimer = setTimeout(closeCustomPopup, 300); });
         return popupContainer;
       }
       
       function closeCustomPopup() {
-        const existingPopup = document.querySelector('.custom-popup-container');
-        if (existingPopup) {
-          existingPopup.remove();
+        if (currentOpenPopup) {
+          currentOpenPopup.remove();
+          currentOpenPopup = null;
         }
         calendarEl.style.backgroundColor = 'white';
-        currentOpenPopup = null;
       }
       
       function showCustomPopup(content, latLng, offset = [0, 0]) {
         closeCustomPopup();
-        return createCustomPopup(content, latLng, offset);
+        currentOpenPopup = createCustomPopup(content, latLng, offset);
       }
-
+      
       function normalizeDate(input) { if (!input) return null; const parts = input.trim().split(/[\/\-]/); let [y, m, d] = parts.length === 3 ? parts : [null, null, null]; if (y && y.length !== 4) [m, d, y] = parts; return y && m && d ? `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`: null; }
       function formatTime12h(timeStr) { if (!timeStr || typeof timeStr !== "string") return ""; timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1"); if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) { return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1"); } const match = timeStr.match(/^(\d{1,2}):(\d{2})$/); if (!match) return timeStr; let [, hourStr, minuteStr] = match; let hour = parseInt(hourStr, 10); const ampm = hour >= 12 ? "PM" : "AM"; hour = hour % 12; if (hour === 0) hour = 12; return `${hour}:${minuteStr} ${ampm}`; }
       function formatDateForDisplay(dateStr) { if (!dateStr) return ""; const [year, month, day] = dateStr.split('-'); return `${month}/${day}/${year}`; }
-      async function geocodeAddress(address) { if (address in markerMap) return markerMap[address]; try { const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`); const res = await fetch(url); const data = await res.json(); if (data.length > 0) { const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }; markerMap[address] = coords; return coords; } } catch (e) { console.error("Geocoding failed:", e); } return null; }
+      
+      // NEW: More aggressive address normalization function
+      function getCanonicalAddress(str) {
+          if (!str) return '';
+          return str.toLowerCase()
+              .replace(/[^a-z0-9\s]/g, '') // remove punctuation
+              .replace(/\s+/g, ' ') // normalize whitespace
+              .replace(/\b(street|st|drive|dr|avenue|ave|road|rd|boulevard|blvd|lane|ln|court|ct)\b/g, '') // remove common suffixes
+              .trim();
+      }
+
+      async function geocodeAddress(address) { 
+          const canonicalAddress = getCanonicalAddress(address);
+          if (markerMap[canonicalAddress]) {
+              return markerMap[canonicalAddress];
+          }
+          if (markerMap[address]) { // Fallback for already cached
+              return markerMap[address];
+          }
+          try { 
+              const url = NOMINATIM_PROXY + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`); 
+              const res = await fetch(url); 
+              const data = await res.json(); 
+              if (data.length > 0) { 
+                  const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }; 
+                  markerMap[canonicalAddress] = coords; // Cache using the canonical address
+                  return coords; 
+              } 
+          } catch (e) { 
+              console.error("Geocoding failed:", e); 
+          } 
+          return null; 
+      }
 
       async function showEventsOnMap(matches) {
         markersClusterGroup.clearLayers();
-        markers = [];
+        let markers = [];
         const geocodePromises = matches.map(event => geocodeAddress(event.address).then(coords => ({ ...event, coords })));
         const eventsWithCoords = await Promise.all(geocodePromises);
 
-        for (const event of eventsWithCoords) {
-          if (event && event.coords) {
+        // This block is no longer needed as the logic is now inside geocodeAddress
+        // const addressToCoordMap = new Map(); ...
+        
+        const normalizedEvents = eventsWithCoords.filter(event => event && event.coords);
+
+        for (const event of normalizedEvents) {
             const timeFormatted = event.time ? formatTime12h(event.time) : "";
             const imageUrl = DEFAULT_BAND_PICTURE;
-
             let eventNameHtml = `<strong>${event.name}</strong>`;
             if (event.website) {
-              eventNameHtml = `<a href="${event.website}" target="_blank" style="text-decoration: none; color: inherit;">${eventNameHtml}</a>`;
+              eventNameHtml = `<a href="${event.website}" target="_blank">${eventNameHtml}</a>`;
             }
-
             const popupContent = `
               <img src="${imageUrl}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">
               ${eventNameHtml}
               <div class="custom-popup-info">
                 ${timeFormatted ? `<div>${timeFormatted}</div>` : ""}
                 ${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}
-                ${event.venue ? `<div>${event.venue}</div>` : ""}
-                <div>${event.address}</div>
+                ${event.venue ? `<div>${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}</div>` : ""}
+                <div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>
                 ${event.phone ? `<div>${event.phone}</div>` : ""}
               </div>
             `;
-            
             const marker = L.marker([event.coords.lat, event.coords.lng], { icon: singlePinIcon });
-
             marker.on("mouseover", function () {
               clearTimeout(unspiderfyTimer);
               clearTimeout(popupCloseTimer);
-              
-              if (currentOpenPopup) {
-                closeCustomPopup();
-              }
-
+              if (currentOpenPopup) { closeCustomPopup(); }
               const calendarRect = calendarEl.getBoundingClientRect();
               const markerPoint = map.latLngToContainerPoint(this.getLatLng());
-
               let offset = [0, 0];
               calendarEl.style.backgroundColor = 'white';
-
-              if (
-                markerPoint.x < calendarRect.right &&
-                markerPoint.y < calendarRect.bottom &&
-                markerPoint.x > calendarRect.left &&
-                markerPoint.y > calendarRect.top
-              ) {
+              if (markerPoint.x < calendarRect.right && markerPoint.y < calendarRect.bottom && markerPoint.x > calendarRect.left && markerPoint.y > calendarRect.top) {
                 offset = [150, 0];
                 calendarEl.style.backgroundColor = '#ffdddd';
               }
-              
-              const popup = showCustomPopup(popupContent, this.getLatLng(), offset);
-              currentOpenPopup = popup;
+              showCustomPopup(popupContent, this.getLatLng(), offset);
             });
-
             marker.on("mouseout", () => {
-              popupCloseTimer = setTimeout(() => {
-                closeCustomPopup();
-              }, 300);
+              popupCloseTimer = setTimeout(closeCustomPopup, 300);
               const parent = markersClusterGroup.getVisibleParent(marker);
-              if (parent) {
-                  unspiderfyTimer = setTimeout(() => parent.unspiderfy(), 300);
-              }
+              if (parent) { unspiderfyTimer = setTimeout(() => parent.unspiderfy(), 300); }
             });
-
-            marker.on("click", () => {});
             markers.push(marker);
-          }
         }
         markersClusterGroup.addLayers(markers);
 
         if (markers.length > 0) {
-            const markerBounds = L.featureGroup(markers).getBounds();
-            
-            map.fitBounds(markerBounds, {
-                paddingTopLeft: [310, 330],
-                paddingBottomRight: [150, 80]
+            map.fitBounds(markersClusterGroup.getBounds(), {
+                paddingTopLeft: [310, 330], paddingBottomRight: [150, 80]
             });
-
         } else {
             map.setView(defaultCenter, defaultZoom, { animate: false });
         }
       }
 
-      markersClusterGroup.on("clusterclick clustermouseover", function (e) {
+      markersClusterGroup.on('clustermouseover', function (e) {
         clearTimeout(unspiderfyTimer);
         e.layer.spiderfy();
       });
-
+      
       async function loadEventsForDate(dateString) {
         selectedDate = dateString;
         buildCalendar(currentYear, currentMonth);
         loadingOverlay.style.display = "flex";
-        
         const matches = events.filter((e) => e.date === selectedDate);
-        
         if (matches.length === 0) {
           notificationBanner.classList.add("show");
-          setTimeout(() => {
-            notificationBanner.classList.remove("show");
-          }, 3000);
+          setTimeout(() => { notificationBanner.classList.remove("show"); }, 3000);
         }
-        
         await showEventsOnMap(matches);
         loadingOverlay.style.display = "none";
       }
@@ -665,16 +514,11 @@
           labelEl.className = "day-label";
           calendarGrid.appendChild(labelEl);
         });
-
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
         monthYear.textContent = `${monthName} ${year}`;
-
-        for (let i = 0; i < firstDay; i++) {
-          calendarGrid.appendChild(document.createElement("div"));
-        }
-
+        for (let i = 0; i < firstDay; i++) { calendarGrid.appendChild(document.createElement("div")); }
         const today = new Date();
         for (let day = 1; day <= daysInMonth; day++) {
           const cell = document.createElement("div");
@@ -683,9 +527,7 @@
           const thisDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
           const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
           if (isToday) cell.classList.add("today");
-          if (selectedDate === thisDate) {
-            cell.classList.add("selected");
-          }
+          if (selectedDate === thisDate) { cell.classList.add("selected"); }
           cell.onclick = () => loadEventsForDate(thisDate);
           calendarGrid.appendChild(cell);
         }
@@ -709,36 +551,37 @@
       }
       
       function refitMap() {
-        if (markers && markers.length > 0) {
-          const markerBounds = L.featureGroup(markers).getBounds();
-          map.fitBounds(markerBounds, {
-              paddingTopLeft: [310, 330],
-              paddingBottomRight: [150, 80]
-          });
+        if (markersClusterGroup.getLayers().length > 0) {
+            map.fitBounds(markersClusterGroup.getBounds(), {
+                paddingTopLeft: [310, 330],
+                paddingBottomRight: [150, 80]
+            });
         }
       }
 
       window.addEventListener('resize', debounce(refitMap, 250));
 
       Papa.parse(SHEET_CSV_URL, {
-        download: true,
-        header: true,
+        download: true, header: true,
         complete: async function (results) {
           loadingOverlay.style.display = "flex";
-          events = results.data.map((row) => ({ name: row["Name"] || "", address: row["Address"] || "", date: normalizeDate(row["Date"]), time: row["Time"] || "", website: row["Band Website"] || "", venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "", phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "", bandPicture: "" }));
-          
+          events = results.data.map((row) => ({
+              name: row["Name"] || "", address: row["Address"] || "", date: normalizeDate(row["Date"]),
+              time: row["Time"] || "", website: row["Band Website"] || "",
+              venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "",
+              phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "",
+              bandPicture: "", mapLink: row["Google Maps Link"] || row["Column K"] || "",
+              venueLink: row["Venue Website"] || row["Column F"] || ""
+          }));
           const today = new Date();
           currentYear = today.getFullYear();
           currentMonth = today.getMonth();
-          
           buildCalendar(currentYear, currentMonth);
           setupNavigation();
-          
           const year = today.getFullYear();
           const month = String(today.getMonth() + 1).padStart(2, "0");
           const day = String(today.getDate()).padStart(2, "0");
           const todaysDateString = `${year}-${month}-${day}`;
-          
           await loadEventsForDate(todaysDateString);
         },
       });
