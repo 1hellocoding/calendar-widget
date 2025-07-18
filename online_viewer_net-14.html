@@ -736,8 +736,8 @@
                 allEvents = result.data.map(row => ({
                     name: row["Name"] || "",
                     address: row["Address"] || "",
-                    date: normalizeDate(row["Date"]),
-                    time: row["Time"] || "",
+                    date: row["Date"] || null, // The Apps Script now sends this pre-formatted
+                    time: row["Time"] || "", // The Apps Script now sends this pre-formatted
                     website: row["Band Website"] || "",
                     venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "",
                     phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "",
@@ -756,7 +756,7 @@
 
             } catch (error) {
                 console.error("Error fetching data from web app:", error);
-                loadingOverlay.textContent = "Failed to load event data.";
+                loadingOverlay.textContent = "Failed to load event data. Check the Web App URL and sheet permissions.";
             }
         }
 
