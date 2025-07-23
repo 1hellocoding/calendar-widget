@@ -693,10 +693,7 @@
                 loadingOverlay.style.display = "flex";
 
                 currentEvents = allEvents.filter((e) => e.date === selectedDate);
-                if (currentEvents.length === 0) {
-                    notificationBanner.classList.add("show");
-                    setTimeout(() => { notificationBanner.classList.remove("show"); }, 3000);
-                }
+                
                 await showEventsOnMap(currentEvents);
 
                 // Hide loading overlay with fade effect
@@ -704,7 +701,14 @@
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => {
                     loadingOverlay.style.display = "none";
-                }, 500);
+                    // Add a 0.5-second (500ms) delay before showing the notification
+                    if (currentEvents.length === 0) {
+                        setTimeout(() => {
+                            notificationBanner.classList.add("show");
+                            setTimeout(() => { notificationBanner.classList.remove("show"); }, 3000);
+                        }, 500); // 500ms delay for the notification to show
+                    }
+                }, 500); // This 500ms is for the loading overlay's fade-out transition
             }
             
             function buildCalendar(year, month) {
