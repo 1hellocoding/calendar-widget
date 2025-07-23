@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
     <style>
-        /* --- MAP STYLES --- */
         *, *::before, *::after { box-sizing: border-box; }
         html, body {
             margin: 0; padding: 0; height: 100%; width: 100%;
@@ -16,13 +15,24 @@
             background: #f9f9f9;
             overflow: hidden; /* Prevent scrollbars */
         }
-        #map {
+
+        /* --- Core Layout & Functional Styles --- */
+        #app-container {
+            display: flex;
+            flex-direction: column;
             height: 100vh;
-            width: 100vw;
+        }
+        #map {
+            flex: 1; 
             position: relative;
             z-index: 0;
-            touch-action: none;
+            min-height: 0;
         }
+        #bottom-nav {
+            flex-shrink: 0;
+        }
+        
+        /* --- Original Calendar and Popup Styles --- */
         .calendar {
             position: absolute;
             top: 20px;
@@ -40,7 +50,6 @@
             transition: background-color 0.2s;
         }
         
-        /* Custom Popup Styles */
         .custom-popup-container {
             position: absolute;
             z-index: 15000;
@@ -57,7 +66,7 @@
             width: 190px;
             min-height: 280px;
             font-size: 13px;
-            line-height: 1.4; 
+            line-height: 1.4;  
             color: #222;
             padding: 0;
             margin: 0;
@@ -166,6 +175,7 @@
         #notification-banner.show {
             top: 20px;
         }
+
         @media (max-width: 480px) {
             .calendar {
                 position: fixed;
@@ -179,16 +189,21 @@
                 box-shadow: 0 8px 20px rgba(0,0,0,0.1);
                 overflow: visible;
             }
-            #map { height: 100vh; }
             .calendar-header, .custom-popup-content strong, .custom-popup-info { font-size: 1.1em; }
             .calendar-grid { gap: 5px; margin-bottom: 8px; }
-            .day { width: 26px; height: 26px; font-size: 0.68em; padding: 0; }
+            .day { 
+                width: 26px; 
+                height: 26px; 
+                font-size: 0.8em;
+                padding: 0; 
+            }
             .calendar-header button { font-size: 1.44em; padding: 0 11px; }
             .custom-popup { width: 280px; min-height: 320px; font-size: 14px; }
             .custom-popup-content { padding: 15px; }
         }
+
         .calendar-header {
-            font-size: 1.12em;
+            font-size: 1.7em; /* ADJUSTED: Increased month/year font size */
             font-weight: 600;
             text-align: center;
             margin-bottom: 10px;
@@ -207,13 +222,17 @@
             gap: 6.4px; margin-bottom: 12.8px;
         }
         .calendar-grid .day-label {
-            text-align: center; font-size: 0.68em;
-            font-weight: bold; color: #64748b;
+            text-align: center; 
+            font-size: 0.8em; /* ADJUSTED: Increased day of week font size */
+            font-weight: bold; 
+            color: #64748b;
         }
         .day {
             background: #d1d5db; color: #111827;
             width: 32px; height: 32px; border-radius: 40%;
-            cursor: pointer; font-size: 0.76em; transition: all 0.2s ease;
+            cursor: pointer; 
+            font-size: 0.9em;
+            transition: all 0.2s ease;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 0;
         }
@@ -222,7 +241,8 @@
         }
         .day.selected {
             background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white;
-            font-weight: bold; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
             transform: scale(1.1);
         }
         .day.today { border: 2px solid #3b82f6; }
@@ -294,39 +314,17 @@
             opacity: 0.4 !important;
             pointer-events: none;
         }
-        
-        /* --- MENU STYLES --- */
-        #bottom-nav {
-           z-index: 99990;
-        }
+        /* Menu styles */
         .hamburger-line {
             transition: all 0.3s ease-in-out;
         }
-        .open .line-1 {
-            transform: translateY(9px) rotate(45deg);
-        }
-        .open .line-2 {
-            opacity: 0;
-            transform: scaleX(0);
-        }
-        .open .line-3 {
-            transform: translateY(-9px) rotate(-45deg);
-        }
-
+        .open .line-1 { transform: translateY(9px) rotate(45deg); }
+        .open .line-2 { opacity: 0; transform: scaleX(0); }
+        .open .line-3 { transform: translateY(-9px) rotate(-45deg); }
     </style>
 </head>
 <body>
     <div id="notification-banner">No events for this date</div>
-    <div id="map"></div>
-    <div class="calendar">
-        <div class="calendar-header">
-            <button id="prevMonth">&#8592;</button>
-            <div id="monthYear"></div>
-            <button id="nextMonth">&#8594;</button>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-    </div>
-
     <div id="loadingOverlay">
         <svg id="loadingMicrophone" role="img" aria-label="Loading microphone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
             <path d="M 27 38 L 37 38 L 37 50 L 27 50 Z" />
@@ -339,75 +337,70 @@
         Loading events...
     </div>
 
-    <div id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200">
-        <div class="flex items-center w-full px-4 py-2 gap-4">
-            
-            <img class="w-12 h-12 rounded-full object-cover pointer-events-none" src="https://i.imghippo.com/files/vPMA5186Y.png" alt="User Profile Picture">
-            
-            <div class="flex flex-1 items-center justify-center gap-2">
-                <a href="https://www.mybandstonight.com/bands-gallery" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
-                    <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                    <span class="text-xs font-medium text-center">Bands Gallery</span>
-                </a>
-                <a href="https://www.mybandstonight.com/venue-map" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
-                    <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                    </svg>
-                    <span class="text-xs font-medium text-center">Venue Map</span>
-                </a>
-                <a href="https://www.mybandstonight.com/home" target="_top" class="flex-1 flex flex-col items-center justify-center bg-blue-600 text-white py-2 rounded-xl transition-all duration-300 shadow-lg">
-                    <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 016 0v8.25a3 3 0 01-3 3z" />
-                    </svg>
-                    <span class="text-xs font-semibold text-center">My Bands Tonight</span>
-                </a>
-                <a href="https://www.mybandstonight.com/newsletter" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
-                    <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                    </svg>
-                    <span class="text-xs font-medium text-center">Newsletter</span>
-                </a>
-                <a href="https://www.mybandstonight.com/band-reviews" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
-                    <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                    </svg>
-                    <span class="text-xs font-medium text-center">Reviews</span>
-                </a>
+    <div id="app-container">
+        <div id="map">
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button id="prevMonth">&#8592;</button>
+                    <div id="monthYear"></div>
+                    <button id="nextMonth">&#8594;</button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
             </div>
-
-            <div class="relative">
-                <button id="menu-button" class="block w-12 h-12 relative rounded-full">
-                    <img class="w-12 h-12 rounded-full object-cover" src="https://i.imghippo.com/files/IqE3821yyM.png" alt="Menu Button">
-                    <div class="absolute inset-0 bg-black bg-opacity-20 rounded-full flex items-center justify-center">
-                        <div id="hamburger-icon" class="space-y-1.5">
-                            <span class="hamburger-line line-1 block w-6 h-[3px] bg-white rounded-full"></span>
-                            <span class="hamburger-line line-2 block w-6 h-[3px] bg-white rounded-full"></span>
-                            <span class="hamburger-line line-3 block w-6 h-[3px] bg-white rounded-full"></span>
-                        </div>
-                    </div>
-                </button>
-                <div id="contact-menu" class="hidden absolute bottom-full right-0 mb-4 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
-                    <a href="mailto:mybandstonight@gmail.com" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-3 text-gray-500">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                        </svg>
-                        <span>Contact Us</span>
+        </div>
+        <div id="bottom-nav" class="bg-white/95 backdrop-blur-md border-t border-gray-200">
+            <div class="flex items-center w-full px-4 py-2 gap-4">
+                <img class="w-12 h-12 rounded-full object-cover pointer-events-none" src="https://i.imghippo.com/files/vPMA5186Y.png" alt="User Profile Picture">
+                <div class="flex flex-1 items-center justify-center gap-2">
+                    <a href="https://www.mybandstonight.com/bands-gallery" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
+                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                        <span class="text-xs font-medium text-center">Bands Gallery</span>
                     </a>
+                    <a href="https://www.mybandstonight.com/venue-map" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
+                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                        <span class="text-xs font-medium text-center">Venue Map</span>
+                    </a>
+                    <a href="https://www.mybandstonight.com/home" target="_top" class="flex-1 flex flex-col items-center justify-center bg-blue-600 text-white py-2 rounded-xl transition-all duration-300 shadow-lg">
+                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 016 0v8.25a3 3 0 01-3 3z" /></svg>
+                        <span class="text-xs font-semibold text-center">My Bands Tonight</span>
+                    </a>
+                    <a href="https://www.mybandstonight.com/newsletter" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
+                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                        <span class="text-xs font-medium text-center">Newsletter</span>
+                    </a>
+                    <a href="https://www.mybandstonight.com/band-reviews" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
+                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+                        <span class="text-xs font-medium text-center">Reviews</span>
+                    </a>
+                </div>
+                <div class="relative">
+                    <button id="menu-button" class="block w-12 h-12 relative rounded-full">
+                        <img class="w-12 h-12 rounded-full object-cover" src="https://i.imghippo.com/files/IqE3821yyM.png" alt="Menu Button">
+                        <div class="absolute inset-0 bg-black bg-opacity-20 rounded-full flex items-center justify-center">
+                            <div id="hamburger-icon" class="space-y-1.5">
+                                <span class="hamburger-line line-1 block w-6 h-[3px] bg-white rounded-full"></span>
+                                <span class="hamburger-line line-2 block w-6 h-[3px] bg-white rounded-full"></span>
+                                <span class="hamburger-line line-3 block w-6 h-[3px] bg-white rounded-full"></span>
+                            </div>
+                        </div>
+                    </button>
+                    <div id="contact-menu" class="hidden absolute bottom-full right-0 mb-4 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                        <a href="mailto:mybandstonight@gmail.com" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-3 text-gray-500"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                            <span>Contact Us</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+ 
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    
+ 
     <script>
         'use strict';
-        window.addEventListener("DOMContentLoaded", () => {
-            //  IMPORTANT: PASTE THE WEB APP URL YOU COPIED FROM GOOGLE APPS SCRIPT HERE
+        const startApp = () => {
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyp5HeEIvZCJn0a4MXH9vsVht_2M4qxuSSln4QBz7fF-keoz7a2rCYwsu1ZJpjPsiNlgA/exec'; 
-            
             const NOMINATIM_PROXY = "https://corsproxy.io/?";
             const DEFAULT_BAND_PICTURE = "https://i.postimg.cc/X7Rc0MNC/temp-Image-Xyc3fg.avif";
 
@@ -419,12 +412,14 @@
             let allEvents = [], markerMap = {}, selectedDate = null, currentYear, currentMonth, currentEvents = [];
             
             const defaultCenter = [41.04, -72.3];
-            const defaultZoom = 10.78;
+            const defaultZoom = 10.5;
             const map = L.map("map", {
                 zoomControl: true, dragging: true, scrollWheelZoom: true,
                 doubleClickZoom: true, boxZoom: true, keyboard: true,
                 touchZoom: true, tap: true, zoomSnap: 0.1,
             }).setView(defaultCenter, defaultZoom);
+            
+            map.invalidateSize();
 
             map.zoomControl.setPosition('topright');
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
@@ -439,7 +434,6 @@
             let spiderfyLayer = L.featureGroup().addTo(map);
             let currentSpiderfiedCluster = null;
             let unspiderfyTimer = null;
-            
             let currentOpenPopup = null;
             let popupCloseTimer = null;
 
@@ -451,7 +445,7 @@
                 popupContainer.className = 'custom-popup-container';
                 const popup = document.createElement('div');
                 popup.className = 'custom-popup';
-                if (offset[0] !== 0) { popup.classList.add('offset-left'); }
+                if (offset[0] !== 0) popup.classList.add('offset-left');
                 const popupContent = document.createElement('div');
                 popupContent.className = 'custom-popup-content';
                 popupContent.innerHTML = content;
@@ -462,12 +456,14 @@
                 tipContainer.appendChild(tip);
                 popup.appendChild(popupContent);
                 popup.appendChild(tipContainer);
+                popupContainer.appendChild(popup);
                 document.body.appendChild(popupContainer);
+                const mapBounds = document.getElementById('map').getBoundingClientRect();
                 const markerPoint = map.latLngToContainerPoint(latLng);
                 const popupWidth = popup.offsetWidth;
                 const popupHeight = popup.offsetHeight;
-                let left = markerPoint.x - popupWidth / 2 + offset[0];
-                let top = markerPoint.y - popupHeight - 40; 
+                let left = mapBounds.left + markerPoint.x - popupWidth / 2 + offset[0];
+                let top = mapBounds.top + markerPoint.y - popupHeight - 40;
                 popupContainer.style.left = left + 'px';
                 popupContainer.style.top = top + 'px';
                 popupContainer.addEventListener('mouseenter', () => { 
@@ -494,17 +490,12 @@
                 currentOpenPopup = createCustomPopup(content, latLng, offset);
             }
             
-            function normalizeDate(input) { if (!input) return null; const parts = input.trim().split(/[\/\-]/); let [y, m, d] = parts.length === 3 ? parts : [null, null, null]; if (y && y.length !== 4) [m, d, y] = parts; return y && m && d ? `${y.padStart(4, "0")}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`: null; }
             function formatTime12h(timeStr) { if (!timeStr || typeof timeStr !== "string") return ""; timeStr = timeStr.trim().replace(/(\d{1,2}:\d{2}):\d{2}/, "$1"); if (timeStr.toUpperCase().includes("AM") || timeStr.toUpperCase().includes("PM")) { return timeStr.replace(/\s+/g, "").replace(/(AM|PM)/, " $1"); } const match = timeStr.match(/^(\d{1,2}):(\d{2})$/); if (!match) return timeStr; let [, hourStr, minuteStr] = match; let hour = parseInt(hourStr, 10); const ampm = hour >= 12 ? "PM" : "AM"; hour = hour % 12; if (hour === 0) hour = 12; return `${hour}:${minuteStr} ${ampm}`; }
             function formatDateForDisplay(dateStr) { if (!dateStr) return ""; const [year, month, day] = dateStr.split('-'); return `${month}/${day}/${year}`; }
             
             function getCanonicalAddress(str) {
                 if (!str) return '';
-                return str.toLowerCase()
-                    .replace(/[^a-z0-9\s]/g, '')
-                    .replace(/\s+/g, ' ')
-                    .replace(/\b(street|st|drive|dr|avenue|ave|road|rd|boulevard|blvd|lane|ln|court|ct)\b/g, '')
-                    .trim();
+                return str.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').replace(/\b(street|st|drive|dr|avenue|ave|road|rd|boulevard|blvd|lane|ln|court|ct)\b/g, '').trim();
             }
 
             async function geocodeAddress(address) { 
@@ -527,26 +518,19 @@
             async function showEventsOnMap(eventMatches) {
                 unspiderfy();
                 markerLayer.clearLayers();
-                
-                const geocodePromises = eventMatches.map(event => 
-                    (event.coords ? Promise.resolve(event.coords) : geocodeAddress(event.address))
-                    .then(coords => {
-                        if (coords) {
-                            event.coords = coords;
-                            event.marker = createEventMarker(event);
-                        }
-                        return event;
-                    })
-                );
-
+                const geocodePromises = eventMatches.map(event => (event.coords ? Promise.resolve(event.coords) : geocodeAddress(event.address)).then(coords => {
+                    if (coords) {
+                        event.coords = coords;
+                        event.marker = createEventMarker(event);
+                    }
+                    return event;
+                }));
                 const eventsWithData = (await Promise.all(geocodePromises)).filter(e => e && e.coords && e.marker);
-                
                 clusterAndDisplay(eventsWithData);
-
                 if (markerLayer.getLayers().length > 0) {
                     map.fitBounds(markerLayer.getBounds(), {
-                        paddingTopLeft: [310, 330], 
-                        paddingBottomRight: [150, 100], 
+                        paddingTopLeft: [310, 300],
+                        paddingBottomRight: [200, 50],
                         maxZoom: 16
                     });
                 } else {
@@ -556,51 +540,28 @@
 
             function clusterAndDisplay(events) {
                 markerLayer.clearLayers();
-                
                 const eventsByAddress = new Map();
                 for (const event of events) {
                     if (event.address) {
                         const canonicalAddress = getCanonicalAddress(event.address);
-                        if (!eventsByAddress.has(canonicalAddress)) {
-                            eventsByAddress.set(canonicalAddress, []);
-                        }
+                        if (!eventsByAddress.has(canonicalAddress)) eventsByAddress.set(canonicalAddress, []);
                         eventsByAddress.get(canonicalAddress).push(event);
                     }
                 }
-
                 for (const addressGroup of eventsByAddress.values()) {
-                    if (addressGroup.length > 1) {
-                        const clusterMarker = createClusterMarker(addressGroup);
-                        markerLayer.addLayer(clusterMarker);
-                    } else if (addressGroup.length === 1) {
-                        const singleEvent = addressGroup[0];
-                        markerLayer.addLayer(singleEvent.marker);
-                    }
+                    if (addressGroup.length > 1) markerLayer.addLayer(createClusterMarker(addressGroup));
+                    else if (addressGroup.length === 1) markerLayer.addLayer(addressGroup[0].marker);
                 }
             }
             
             function createEventMarker(event) {
                 const timeFormatted = event.time ? formatTime12h(event.time) : "";
-                const imageUrl = DEFAULT_BAND_PICTURE;
                 let eventNameHtml = `<strong>${event.name}</strong>`;
                 if (event.website) eventNameHtml = `<a href="${event.website}" target="_blank">${eventNameHtml}</a>`;
-                
-                const popupContent = `
-                    <img src="${imageUrl}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">
-                    ${eventNameHtml}
-                    <div class="custom-popup-info">
-                        ${timeFormatted ? `<div>${timeFormatted}</div>` : ""}
-                        ${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}
-                        ${event.venue ? `<div>${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}</div>` : ""}
-                        <div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>
-                        ${event.phone ? `<div>${event.phone}</div>` : ""}
-                    </div>`;
-
+                const popupContent = `<img src="${DEFAULT_BAND_PICTURE}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<div class="custom-popup-info">${timeFormatted ? `<div>${timeFormatted}</div>` : ""}${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}<div>${event.venue ? `${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}` : ""}</div><div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>${event.phone ? `<div>${event.phone}</div>` : ""}</div>`;
                 const marker = L.marker(event.coords, { icon: singlePinIcon });
                 marker.on("mouseover", function () {
-                    if (this._icon && L.DomUtil.hasClass(this._icon, 'marker-faded')) {
-                        return;
-                    }
+                    if (this._icon && L.DomUtil.hasClass(this._icon, 'marker-faded')) return;
                     cancelUnspiderfy();
                     clearTimeout(popupCloseTimer);
                     if (currentOpenPopup) closeCustomPopup();
@@ -615,116 +576,64 @@
 
             function createClusterMarker(clusterGroup) {
                 const center = clusterGroup[0].coords;
-                const clusterIcon = L.divIcon({
-                    html: `<span class="cluster-text">${clusterGroup.length}</span>`,
-                    className: 'custom-cluster-pin',
-                    iconSize: [40, 40]
-                });
+                const clusterIcon = L.divIcon({ html: `<span class="cluster-text">${clusterGroup.length}</span>`, className: 'custom-cluster-pin', iconSize: [40, 40] });
                 const clusterMarker = L.marker(center, { icon: clusterIcon });
-                
-                clusterMarker.on('mouseover', () => {
-                    cancelUnspiderfy();
-                    spiderfy(clusterMarker, clusterGroup);
-                });
-                clusterMarker.on('mouseout', () => {
-                    scheduleUnspiderfy();
-                });
+                clusterMarker.on('mouseover', () => { cancelUnspiderfy(); spiderfy(clusterMarker, clusterGroup); });
+                clusterMarker.on('mouseout', () => { scheduleUnspiderfy(); });
                 return clusterMarker;
             }
 
             function spiderfy(clusterMarker, clusterGroup) {
-                if (currentSpiderfiedCluster && currentSpiderfiedCluster !== clusterMarker) {
-                    unspiderfy();
-                }
+                if (currentSpiderfiedCluster && currentSpiderfiedCluster !== clusterMarker) unspiderfy();
                 if (currentSpiderfiedCluster === clusterMarker) return;
-                
                 map.closePopup();
-                
                 currentSpiderfiedCluster = clusterMarker;
                 markerLayer.removeLayer(clusterMarker);
-
                 const centerLatLng = clusterMarker.getLatLng();
                 const fadeRadius = 4828; 
-
                 markerLayer.eachLayer(layer => {
                     if (layer !== clusterMarker) {
-                        const distance = centerLatLng.distanceTo(layer.getLatLng());
-                        if (distance < fadeRadius) {
-                            if (layer._icon) { 
-                                L.DomUtil.addClass(layer._icon, 'marker-faded');
-                            }
+                        if (centerLatLng.distanceTo(layer.getLatLng()) < fadeRadius) {
+                            if (layer._icon) L.DomUtil.addClass(layer._icon, 'marker-faded');
                         }
                     }
                 });
-
                 const centerPoint = map.latLngToLayerPoint(centerLatLng);
                 const count = clusterGroup.length;
-                const twoPi = Math.PI * 2;
                 const circleDistance = 35 + count * 3;
-                const angleStep = twoPi / count;
-
+                const angleStep = (Math.PI * 2) / count;
                 let newPositions = [];
                 for (let i = 0; i < count; i++) {
                     const angle = i * angleStep;
-                    const newPoint = L.point(
-                        centerPoint.x + circleDistance * Math.cos(angle),
-                        centerPoint.y + circleDistance * Math.sin(angle)
-                    );
-                    newPositions.push(map.layerPointToLatLng(newPoint));
+                    newPositions.push(map.layerPointToLatLng(L.point(centerPoint.x + circleDistance * Math.cos(angle), centerPoint.y + circleDistance * Math.sin(angle))));
                 }
-
                 clusterGroup.forEach((event, i) => {
                     const leg = L.polyline([centerLatLng, centerLatLng], { className: 'spider-leg', weight: 1.5 });
                     spiderfyLayer.addLayer(leg);
-                    
                     const marker = event.marker;
-                    marker.setLatLng(centerLatLng);
-                    marker.setOpacity(0);
+                    marker.setLatLng(centerLatLng).setOpacity(0);
                     spiderfyLayer.addLayer(marker);
-                    
-                    setTimeout(() => {
-                        marker.setLatLng(newPositions[i]);
-                        marker.setOpacity(1);
-                        leg.setLatLngs([centerLatLng, newPositions[i]]);
-                    }, 10);
+                    setTimeout(() => { marker.setLatLng(newPositions[i]).setOpacity(1); leg.setLatLngs([centerLatLng, newPositions[i]]); }, 10);
                 });
-                
-                spiderfyLayer.on('mouseover', cancelUnspiderfy);
-                spiderfyLayer.on('mouseout', scheduleUnspiderfy);
+                spiderfyLayer.on('mouseover', cancelUnspiderfy).on('mouseout', scheduleUnspiderfy);
             }
 
             function unspiderfy() {
-                markerLayer.eachLayer(layer => {
-                    if (layer._icon) {
-                        L.DomUtil.removeClass(layer._icon, 'marker-faded');
-                    }
-                });
-
+                markerLayer.eachLayer(layer => { if (layer._icon) L.DomUtil.removeClass(layer._icon, 'marker-faded'); });
                 if (!currentSpiderfiedCluster) return;
-
                 const clusterToRestore = currentSpiderfiedCluster;
                 const centerLatLng = clusterToRestore.getLatLng();
-                
                 spiderfyLayer.off();
                 currentSpiderfiedCluster = null;
-
                 const layersToRemove = [];
                 spiderfyLayer.eachLayer(layer => {
                     layersToRemove.push(layer);
-                    if (layer instanceof L.Marker) {
-                        layer.setLatLng(centerLatLng);
-                        layer.setOpacity(0);
-                    } else if (layer instanceof L.Polyline) {
-                        const latlngs = layer.getLatLngs();
-                        layer.setLatLngs([latlngs[0], centerLatLng]);
-                    }
+                    if (layer instanceof L.Marker) layer.setLatLng(centerLatLng).setOpacity(0);
+                    else if (layer instanceof L.Polyline) layer.setLatLngs([layer.getLatLngs()[0], centerLatLng]);
                 });
-
                 setTimeout(() => {
                     layersToRemove.forEach(layer => spiderfyLayer.removeLayer(layer));
-                    if (!markerLayer.hasLayer(clusterToRestore)) {
-                       markerLayer.addLayer(clusterToRestore);
-                    }
+                    if (!markerLayer.hasLayer(clusterToRestore)) markerLayer.addLayer(clusterToRestore);
                 }, 200);
             }
 
@@ -732,7 +641,6 @@
                 selectedDate = dateString;
                 buildCalendar(currentYear, currentMonth);
                 loadingOverlay.style.display = "flex";
-                
                 currentEvents = allEvents.filter((e) => e.date === selectedDate);
                 if (currentEvents.length === 0) {
                     notificationBanner.classList.add("show");
@@ -745,26 +653,19 @@
             function buildCalendar(year, month) {
                 calendarGrid.innerHTML = "";
                 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                dayLabels.forEach((label) => {
-                    const labelEl = document.createElement("div");
-                    labelEl.textContent = label;
-                    labelEl.className = "day-label";
-                    calendarGrid.appendChild(labelEl);
-                });
+                dayLabels.forEach(label => { const el = document.createElement("div"); el.textContent = label; el.className = "day-label"; calendarGrid.appendChild(el); });
                 const firstDay = new Date(year, month, 1).getDay();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const monthName = new Date(year, month).toLocaleString("default", { month: "long" });
-                monthYear.textContent = `${monthName} ${year}`;
-                for (let i = 0; i < firstDay; i++) { calendarGrid.appendChild(document.createElement("div")); }
+                monthYear.textContent = `${new Date(year, month).toLocaleString("default", { month: "long" })} ${year}`;
+                for (let i = 0; i < firstDay; i++) calendarGrid.appendChild(document.createElement("div"));
                 const today = new Date();
                 for (let day = 1; day <= daysInMonth; day++) {
                     const cell = document.createElement("div");
                     cell.className = "day";
                     cell.textContent = day;
                     const thisDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                    const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
-                    if (isToday) cell.classList.add("today");
-                    if (selectedDate === thisDate) { cell.classList.add("selected"); }
+                    if (today.getDate() === day && today.getMonth() === month && today.getFullYear() === year) cell.classList.add("today");
+                    if (selectedDate === thisDate) cell.classList.add("selected");
                     cell.onclick = () => loadEventsForDate(thisDate);
                     calendarGrid.appendChild(cell);
                 }
@@ -775,37 +676,21 @@
                 document.getElementById("nextMonth").onclick = () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } buildCalendar(currentYear, currentMonth); };
             }
             
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
+            function debounce(func, wait) { let timeout; return function(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
             
             function refitMap() {
                 if (currentSpiderfiedCluster) return;
                 if (markerLayer.getLayers().length > 0) {
                     map.fitBounds(markerLayer.getBounds(), {
-                        paddingTopLeft: [310, 330],
-                        paddingBottomRight: [150, 100],
+                        paddingTopLeft: [310, 300],
+                        paddingBottomRight: [200, 50],
                         maxZoom: 16
                     });
                 }
             }
-
-            window.addEventListener('resize', debounce(refitMap, 250));
             
-            map.on('zoomend', () => {
-                unspiderfy();
-                if(currentEvents.length > 0) {
-                    clusterAndDisplay(currentEvents.filter(e => e.coords && e.marker));
-                }
-            });
+            window.addEventListener('resize', debounce(refitMap, 250));
+            map.on('zoomend', () => { unspiderfy(); if(currentEvents.length > 0) clusterAndDisplay(currentEvents.filter(e => e.coords && e.marker)); });
             map.on('click', unspiderfy);
 
             async function fetchAndProcessData() {
@@ -813,61 +698,40 @@
                 try {
                     const response = await fetch(WEB_APP_URL);
                     const result = await response.json();
-
-                    if (result.error) {
-                        throw new Error(result.error);
-                    }
-
-                    allEvents = result.data.map(row => ({
-                        name: row["Name"] || "",
-                        address: row["Address"] || "",
-                        date: row["Date"] || null, 
-                        time: row["Time"] || "", 
-                        website: row["Band Website"] || "",
-                        venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "",
-                        phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "",
-                        mapLink: row["Google Maps Link"] || row["Column K"] || "",
-                        venueLink: row["Venue Website"] || row["Column F"] || ""
-                    }));
-
+                    if (result.error) throw new Error(result.error);
+                    allEvents = result.data.map(row => ({ name: row["Name"] || "", address: row["Address"] || "", date: row["Date"] || null, time: row["Time"] || "", website: row["Band Website"] || "", venue: row["Venue Name"] || row["Venue"] || row["VenueName"] || row["Venue Title"] || row["Column D"] || "", phone: row["Venue Phone Number"] || row["Phone"] || row["Phone Number"] || row["Column G"] || "", mapLink: row["Google Maps Link"] || row["Column K"] || "", venueLink: row["Venue Website"] || row["Column F"] || "" }));
                     const today = new Date();
                     currentYear = today.getFullYear();
                     currentMonth = today.getMonth();
                     buildCalendar(currentYear, currentMonth);
                     setupNavigation();
-                    
                     const todaysDateString = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
                     await loadEventsForDate(todaysDateString);
-
                 } catch (error) {
                     console.error("Error fetching data from web app:", error);
                     loadingOverlay.textContent = "Failed to load event data. Check the Web App URL and sheet permissions.";
                 }
             }
-
             fetchAndProcessData();
-        });
-    </script>
+        };
 
-    <script>
-        const menuButton = document.getElementById('menu-button');
-        const contactMenu = document.getElementById('contact-menu');
-        const hamburgerIcon = document.getElementById('hamburger-icon');
-
-        menuButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            contactMenu.classList.toggle('hidden');
-            hamburgerIcon.classList.toggle('open');
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!contactMenu.classList.contains('hidden')) {
-                if (!menuButton.contains(event.target)) {
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(startApp, 0);
+            const menuButton = document.getElementById('menu-button');
+            const contactMenu = document.getElementById('contact-menu');
+            const hamburgerIcon = document.getElementById('hamburger-icon');
+            menuButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                contactMenu.classList.toggle('hidden');
+                hamburgerIcon.classList.toggle('open');
+            });
+            document.addEventListener('click', (event) => {
+                if (!contactMenu.classList.contains('hidden') && !menuButton.contains(event.target)) {
                     contactMenu.classList.add('hidden');
                     hamburgerIcon.classList.remove('open');
                 }
-            }
+            });
         });
     </script>
-    </body>
+</body>
 </html>
