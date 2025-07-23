@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <title>Map Calendar with Custom Spiderfy</title>
+    <title>My Bands Tonight</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
@@ -348,7 +348,11 @@
                 <div class="calendar-grid" id="calendarGrid"></div>
             </div>
         </div>
-        <div id="bottom-nav" class="bg-white/95 backdrop-blur-md border-t border-gray-200">
+        <div id="bottom-nav" class="relative bg-white/95 backdrop-blur-md border-t border-gray-200">
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-t-lg border-t border-l border-r border-gray-200 text-center whitespace-nowrap">
+                <div class="text-xs text-gray-600">Please confirm all gig dates and times</div>
+            </div>
+            
             <div class="flex items-center w-full px-4 py-2 gap-4">
                 <img class="w-12 h-12 rounded-full object-cover pointer-events-none" src="https://i.imghippo.com/files/vPMA5186Y.png" alt="User Profile Picture">
                 <div class="flex flex-1 items-center justify-center gap-2">
