@@ -246,17 +246,63 @@
             transform: scale(1.1);
         }
         .day.today { border: 2px solid #3b82f6; }
+        
+        /* --- NEW: Loading Overlay Styles from Venue Map --- */
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
         #loadingOverlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.9); z-index: 20000;
-            display: none; justify-content: center; align-items: center;
-            flex-direction: column; font-size: 1.2em; color: #3b82f6; user-select: none;
+            background: rgba(249, 249, 249, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 20000;
+            display: none; /* Initially hidden, shown by JS */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            user-select: none;
         }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        #loadingMicrophone {
-            width: 80px; height: 80px; animation: spin 2s linear infinite;
-            margin-bottom: 15px; fill: #3b82f6;
+        .loading-image-container {
+            position: relative;
+            width: 1000px;
+            height: 500px;
+            margin-bottom: 25px;
+            filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);
+            -webkit-mask-image: url('https://i.imghippo.com/files/ofc9438IXE.png');
+            mask-image: url('https://i.imghippo.com/files/ofc9438IXE.png');
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
         }
+        .loading-image-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
+            transform: translateX(-100%);
+            animation: shimmer 2.5s infinite linear;
+        }
+        .loading-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .loading-text {
+            font-size: 1.5em;
+            color: #3b82f6;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
         .custom-cluster-pin {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>');
             background-size: contain; background-repeat: no-repeat; background-position: center;
@@ -325,16 +371,12 @@
 </head>
 <body>
     <div id="notification-banner">No events for this date</div>
+    
     <div id="loadingOverlay">
-        <svg id="loadingMicrophone" role="img" aria-label="Loading microphone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-            <path d="M 27 38 L 37 38 L 37 50 L 27 50 Z" />
-            <rect x="22" y="12" width="20" height="30" rx="10" ry="10" fill="#1e3a8a"/>
-            <rect x="26" y="16" width="12" height="4" rx="2"/>
-            <rect x="26" y="24" width="12" height="4" rx="2"/>
-            <rect x="26" y="32" width="12" height="4" rx="2"/>
-            <line x1="32" y1="50" x2="32" y2="60" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" />
-        </svg>
-        Loading events...
+        <div class="loading-image-container">
+            <img src="https://i.imghippo.com/files/ofc9438IXE.png" alt="Loading" class="loading-image">
+        </div>
+        <div class="loading-text">Loading Events...</div>
     </div>
 
     <div id="app-container">
@@ -398,9 +440,9 @@
             </div>
         </div>
     </div>
- 
+
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
- 
+
     <script>
         'use strict';
         const startApp = () => {
@@ -641,17 +683,28 @@
                 }, 200);
             }
 
+            // --- UPDATED loadEventsForDate Function ---
             async function loadEventsForDate(dateString) {
                 selectedDate = dateString;
                 buildCalendar(currentYear, currentMonth);
+                
+                // Show loading overlay with reset opacity
+                loadingOverlay.style.opacity = '1';
                 loadingOverlay.style.display = "flex";
+
                 currentEvents = allEvents.filter((e) => e.date === selectedDate);
                 if (currentEvents.length === 0) {
                     notificationBanner.classList.add("show");
                     setTimeout(() => { notificationBanner.classList.remove("show"); }, 3000);
                 }
                 await showEventsOnMap(currentEvents);
-                loadingOverlay.style.display = "none";
+
+                // Hide loading overlay with fade effect
+                loadingOverlay.style.transition = 'opacity 0.5s ease';
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loadingOverlay.style.display = "none";
+                }, 500);
             }
             
             function buildCalendar(year, month) {
@@ -713,7 +766,15 @@
                     await loadEventsForDate(todaysDateString);
                 } catch (error) {
                     console.error("Error fetching data from web app:", error);
-                    loadingOverlay.textContent = "Failed to load event data. Check the Web App URL and sheet permissions.";
+                    // --- UPDATED: Error handling for new loading screen ---
+                    const loadingText = document.querySelector('#loadingOverlay .loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = "Failed to load event data.";
+                        loadingText.style.color = "#dc2626";
+                    } else {
+                        // Fallback for safety
+                        loadingOverlay.textContent = "Failed to load event data. Check the Web App URL and sheet permissions.";
+                    }
                 }
             }
             fetchAndProcessData();
