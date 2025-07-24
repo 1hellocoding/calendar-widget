@@ -253,17 +253,40 @@
             font-weight: bold;
             letter-spacing: 2px;
         }
-        .custom-cluster-pin {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            width: 40px !important; height: 40px !important; position: relative;
-            border: none; background-color: transparent !important; cursor: pointer;
-            filter: drop-shadow(0 0 2px white);
+        /* --- NEW: Icon style for the guitar pin --- */
+        .guitar-marker-icon {
+            background-color: #dc2626; /* A strong red color */
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Ensures the image respects the border-radius */
+            cursor: pointer;
         }
-        .single-pin-icon { filter: drop-shadow(0 0 2px white); }
-        .custom-cluster-pin span {
-            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-            color: white; font-size: 12px; font-weight: bold; text-shadow: 0 0 3px rgba(0,0,0,0.5);
+        .guitar-marker-icon img {
+            width: 100%; /* Make image fill the circle */
+            height: 100%;
+            object-fit: cover; /* Cover the area without distortion */
+        }
+        /* --- NEW: Updated cluster pin style --- */
+        .custom-cluster-pin {
+            width: 40px !important;
+            height: 40px !important;
+            background-color: #dc2626; /* Match red color */
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
         }
         .leaflet-control-zoom {
             background: transparent !important; box-shadow: none !important;
@@ -323,7 +346,7 @@
             <div class="absolute bottom-full left-1/2 -translate-x-1/2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-t-lg border-t border-l border-r border-gray-200 text-center whitespace-nowrap">
                 <div class="text-xs text-gray-600">Please confirm all gig dates and times</div>
             </div>
-            
+           
             <div class="flex items-center w-full px-4 py-2 gap-4">
                 <img class="w-12 h-12 rounded-full object-cover pointer-events-none" src="https://i.imghippo.com/files/vPMA5186Y.png" alt="User Profile Picture">
                 <div class="flex flex-1 items-center justify-center gap-2">
@@ -340,7 +363,7 @@
                         <span class="text-xs font-semibold text-center">My Bands Tonight</span>
                     </a>
                     <a href="https://www.mybandstonight.com/newsletter" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
-                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                        <svg class="w-6 h-6 mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25-2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                         <span class="text-xs font-medium text-center">Newsletter</span>
                     </a>
                     <a href="https://www.mybandstonight.com/band-reviews" target="_top" class="flex-1 flex flex-col items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 py-2 rounded-xl transition-all duration-300">
@@ -361,7 +384,7 @@
                     </button>
                     <div id="contact-menu" class="hidden absolute bottom-full right-0 mb-4 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
                         <a href="mailto:mybandstonight@gmail.com" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-3 text-gray-500"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-3 text-gray-500"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25-2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                             <span>Contact Us</span>
                         </a>
                     </div>
@@ -398,10 +421,12 @@
             map.zoomControl.setPosition('topright');
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-            const singlePinIcon = L.icon({
-                iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6" fill-rule="evenodd"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z M12 11.5C10.62 11.5 9.5 10.38 9.5 9S10.62 6.5 12 6.5 14.5 7.62 14.5 9 13.38 11.5 12 11.5z"/></svg>',
-                iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40],
-                className: 'single-pin-icon'
+            // --- NEW: Using divIcon for the red guitar pin ---
+            const singlePinIcon = L.divIcon({
+                html: `<div class="guitar-marker-icon"><img src="https://i.imghippo.com/files/IFyu6926IKQ.jpg" alt="Event Venue"></div>`,
+                className: '', // The styling is handled by the inner div's class
+                iconSize: [34, 34],
+                iconAnchor: [17, 17], // Anchor to the center of the icon
             });
 
             let markerLayer = L.featureGroup().addTo(map);
@@ -435,7 +460,8 @@
                 const mapBounds = document.getElementById('map').getBoundingClientRect();
                 const markerPoint = map.latLngToContainerPoint(latLng);
                 let left = mapBounds.left + markerPoint.x - (popup.offsetWidth / 2) + offset[0];
-                let top = mapBounds.top + markerPoint.y - popup.offsetHeight - 40;
+                // --- MODIFIED: Adjusted popup position for new centered icon anchor ---
+                let top = mapBounds.top + markerPoint.y - popup.offsetHeight - 27; // Position above the 34px icon
                 popupContainer.style.left = left + 'px';
                 popupContainer.style.top = top + 'px';
                 popupContainer.addEventListener('mouseenter', () => { clearTimeout(popupCloseTimer); cancelUnspiderfy(); });
@@ -589,9 +615,15 @@
                 return marker;
             }
 
+            // --- MODIFIED: Updated cluster marker creation ---
             function createClusterMarker(clusterGroup) {
                 const center = clusterGroup[0].coords;
-                const clusterIcon = L.divIcon({ html: `<span>${clusterGroup.length}</span>`, className: 'custom-cluster-pin' });
+                const clusterIcon = L.divIcon({
+                    html: `<div>${clusterGroup.length}</div>`,
+                    className: 'custom-cluster-pin',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20] // Anchor to the center of the 40x40 circle
+                });
                 const clusterMarker = L.marker(center, { icon: clusterIcon });
                 clusterMarker.on('mouseover', () => { cancelUnspiderfy(); spiderfy(clusterMarker, clusterGroup); });
                 clusterMarker.on('mouseout', () => { scheduleUnspiderfy(); });
@@ -601,33 +633,33 @@
             function spiderfy(clusterMarker, clusterGroup) {
                 if (currentSpiderfiedCluster && currentSpiderfiedCluster !== clusterMarker) unspiderfy();
                 if (currentSpiderfiedCluster === clusterMarker) return;
-        
+            
                 map.closePopup();
                 currentSpiderfiedCluster = clusterMarker;
                 markerLayer.removeLayer(clusterMarker);
-        
+            
                 const centerLatLng = clusterMarker.getLatLng();
                 markerLayer.eachLayer(layer => {
                     if (layer !== clusterMarker && centerLatLng.distanceTo(layer.getLatLng()) < 4828) {
                         if (layer._icon) L.DomUtil.addClass(layer._icon, 'marker-faded');
                     }
                 });
-        
+            
                 const centerPoint = map.latLngToLayerPoint(centerLatLng);
                 const count = clusterGroup.length;
-        
+            
                 // --- MODIFIED layout logic for centered horizontal spread ---
-                const pinWidth = 40;
+                const pinWidth = 34; // size of the guitar icon
                 const pinPadding = 15;
                 const totalWidth = (count * pinWidth) + ((count - 1) * pinPadding);
                 const startX = centerPoint.x - (totalWidth / 2);
                 const yOffset = 70;
-        
+            
                 clusterGroup.forEach((event, i) => {
                     const xPos = startX + (i * (pinWidth + pinPadding)) + (pinWidth / 2);
                     const yPos = centerPoint.y + yOffset;
                     const newLatLng = map.layerPointToLatLng(L.point(xPos, yPos));
-        
+            
                     const leg = L.polyline([centerLatLng, centerLatLng], { className: 'spider-leg', weight: 1.5 });
                     spiderfyLayer.addLayer(leg);
                     const marker = event.marker;
@@ -638,7 +670,7 @@
                         leg.setLatLngs([centerLatLng, newLatLng]);
                     }, 10);
                 });
-        
+            
                 spiderfyLayer.on('mouseover', cancelUnspiderfy).on('mouseout', scheduleUnspiderfy);
             }
 
