@@ -199,11 +199,12 @@
             transform: scale(1.1);
         }
         .day.today { border: 2px solid #3b82f6; }
-        @keyframes shimmer {
-            100% {
-                transform: translateX(100%);
-            }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
+        
         #loadingOverlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(249, 249, 249, 0.85);
@@ -215,47 +216,37 @@
             flex-direction: column;
             user-select: none;
         }
+        
         .loading-image-container {
             position: relative;
-            width: 1000px;
+            width: 500px;
             height: 500px;
             margin-bottom: 25px;
-            filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);
-            -webkit-mask-image: url('https://i.imghippo.com/files/ofc9438IXE.png');
-            mask-image: url('https://i.imghippo.com/files/ofc9438IXE.png');
-            -webkit-mask-size: contain;
-            mask-size: contain;
-            -webkit-mask-position: center;
-            mask-position: center;
-            -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
         }
-        .loading-image-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
-            transform: translateX(-100%);
-            animation: shimmer 2.5s infinite linear;
-        }
+        
+        /* --- MODIFIED: Added drop-shadow filter for 3D effect --- */
         .loading-image {
             width: 100%;
             height: 100%;
             object-fit: contain;
             display: block;
+            animation: spin 3s linear infinite;
+            filter: 
+                drop-shadow(1px 1px 0px rgba(0,0,0,0.4))
+                drop-shadow(2px 2px 0px rgba(0,0,0,0.3))
+                drop-shadow(3px 3px 0px rgba(0,0,0,0.2))
+                drop-shadow(4px 4px 0px rgba(0,0,0,0.1))
+                drop-shadow(5px 5px 3px rgba(0,0,0,0.2));
         }
+
         .loading-text {
             font-size: 1.5em;
             color: #3b82f6;
             font-weight: bold;
             letter-spacing: 2px;
         }
-        /* --- NEW: Icon style for the guitar pin --- */
         .guitar-marker-icon {
-            background-color: #dc2626; /* A strong red color */
+            background-color: #dc2626;
             border-radius: 50%;
             border: 2px solid white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.4);
@@ -264,19 +255,18 @@
             align-items: center;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Ensures the image respects the border-radius */
+            overflow: hidden;
             cursor: pointer;
         }
         .guitar-marker-icon img {
-            width: 100%; /* Make image fill the circle */
+            width: 100%;
             height: 100%;
-            object-fit: cover; /* Cover the area without distortion */
+            object-fit: cover;
         }
-        /* --- NEW: Updated cluster pin style --- */
         .custom-cluster-pin {
             width: 40px !important;
             height: 40px !important;
-            background-color: #dc2626; /* Match red color */
+            background-color: #dc2626;
             color: white;
             font-weight: bold;
             font-size: 14px;
@@ -347,7 +337,7 @@
             <div class="absolute bottom-full left-1/2 -translate-x-1/2 px-4 py-2 bg-white/95 backdrop-blur-md rounded-t-lg border-t border-l border-r border-gray-200 text-center whitespace-nowrap">
                 <div class="text-sm text-gray-600">Please confirm all gig dates and times</div>
             </div>
-            
+           
             <div class="flex items-center w-full px-4 py-2 gap-4">
                 <img class="w-12 h-12 rounded-full object-cover pointer-events-none" src="https://i.imghippo.com/files/vPMA5186Y.png" alt="User Profile Picture">
                 <div class="flex flex-1 items-center justify-center gap-2 min-w-0">
@@ -414,10 +404,9 @@
             const calendarGrid = document.getElementById("calendarGrid");
             const monthYear = document.getElementById("monthYear");
             const notificationBanner = document.getElementById("notification-banner");
-            // NEW: Get reference to the event count display
             const eventCountDisplay = document.getElementById("event-count-display");
             let allEvents = [], markerMap = {}, selectedDate = null, currentYear, currentMonth, currentEvents = [];
-            
+           
             const defaultCenter = [41.04, -72.3];
             const defaultZoom = 10.5;
             const map = L.map("map", {
@@ -425,17 +414,16 @@
                 doubleClickZoom: true, boxZoom: true, keyboard: true,
                 touchZoom: true, tap: true, zoomSnap: 0.1,
             }).setView(defaultCenter, defaultZoom);
-            
+           
             map.invalidateSize();
             map.zoomControl.setPosition('topright');
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-            // --- NEW: Using divIcon for the red guitar pin ---
             const singlePinIcon = L.divIcon({
                 html: `<div class="guitar-marker-icon"><img src="https://i.imghippo.com/files/IFyu6926IKQ.jpg" alt="Event Venue"></div>`,
-                className: '', // The styling is handled by the inner div's class
+                className: '', 
                 iconSize: [34, 34],
-                iconAnchor: [17, 17], // Anchor to the center of the icon
+                iconAnchor: [17, 17],
             });
 
             let markerLayer = L.featureGroup().addTo(map);
@@ -469,8 +457,7 @@
                 const mapBounds = document.getElementById('map').getBoundingClientRect();
                 const markerPoint = map.latLngToContainerPoint(latLng);
                 let left = mapBounds.left + markerPoint.x - (popup.offsetWidth / 2) + offset[0];
-                // --- MODIFIED: Adjusted popup position for new centered icon anchor ---
-                let top = mapBounds.top + markerPoint.y - popup.offsetHeight - 27; // Position above the 34px icon
+                let top = mapBounds.top + markerPoint.y - popup.offsetHeight - 27;
                 popupContainer.style.left = left + 'px';
                 popupContainer.style.top = top + 'px';
                 popupContainer.addEventListener('mouseenter', () => { clearTimeout(popupCloseTimer); cancelUnspiderfy(); });
@@ -522,7 +509,7 @@
                     .replace(/\b(street|st|road|rd|avenue|ave|drive|dr|boulevard|blvd|lane|ln|court|ct|place|pl)\b/g, ' ')
                     .replace(/\s+/g, ' ').trim();
             }
-            
+           
             async function geocodeAddress(event) {
                 const originalAddress = event.address;
                 if (!originalAddress) return null;
@@ -563,7 +550,7 @@
                 markerMap[canonicalAddress] = null;
                 return null;
             }
-            
+           
             async function showEventsOnMap(eventMatches) {
                 unspiderfy();
                 markerLayer.clearLayers();
@@ -604,12 +591,12 @@
                     }
                 }
             }
-            
+           
             function createEventMarker(event, isImprecise) {
                 const timeFormatted = event.time ? formatTime12h(event.time) : "";
                 let eventNameHtml = `<strong>${event.name}</strong>`;
                 if (event.website) eventNameHtml = `<a href="${event.website}" target="_blank">${eventNameHtml}</a>`;
-                
+               
                 const impreciseNotice = isImprecise ? `<div class="imprecise-notice">📍 Location is approximate (town center)</div>` : "";
 
                 const popupContent = `<img src="${DEFAULT_BAND_PICTURE}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<div class="custom-popup-info">${timeFormatted ? `<div>${timeFormatted}</div>` : ""}${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}<div>${event.venue ? `${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}` : ""}</div><div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>${event.phone ? `<div>${event.phone}</div>` : ""} ${impreciseNotice}</div>`;
@@ -624,51 +611,49 @@
                 return marker;
             }
 
-            // --- MODIFIED: Updated cluster marker creation ---
             function createClusterMarker(clusterGroup) {
                 const center = clusterGroup[0].coords;
                 const clusterIcon = L.divIcon({
                     html: `<div>${clusterGroup.length}</div>`,
                     className: 'custom-cluster-pin',
                     iconSize: [40, 40],
-                    iconAnchor: [20, 20] // Anchor to the center of the 40x40 circle
+                    iconAnchor: [20, 20]
                 });
                 const clusterMarker = L.marker(center, { icon: clusterIcon });
                 clusterMarker.on('mouseover', () => { cancelUnspiderfy(); spiderfy(clusterMarker, clusterGroup); });
                 clusterMarker.on('mouseout', () => { scheduleUnspiderfy(); });
                 return clusterMarker;
             }
-            
+           
             function spiderfy(clusterMarker, clusterGroup) {
                 if (currentSpiderfiedCluster && currentSpiderfiedCluster !== clusterMarker) unspiderfy();
                 if (currentSpiderfiedCluster === clusterMarker) return;
-            
+               
                 map.closePopup();
                 currentSpiderfiedCluster = clusterMarker;
                 markerLayer.removeLayer(clusterMarker);
-            
+               
                 const centerLatLng = clusterMarker.getLatLng();
                 markerLayer.eachLayer(layer => {
                     if (layer !== clusterMarker && centerLatLng.distanceTo(layer.getLatLng()) < 4828) {
                         if (layer._icon) L.DomUtil.addClass(layer._icon, 'marker-faded');
                     }
                 });
-            
+               
                 const centerPoint = map.latLngToLayerPoint(centerLatLng);
                 const count = clusterGroup.length;
-            
-                // --- MODIFIED layout logic for centered horizontal spread ---
-                const pinWidth = 34; // size of the guitar icon
+               
+                const pinWidth = 34;
                 const pinPadding = 15;
                 const totalWidth = (count * pinWidth) + ((count - 1) * pinPadding);
                 const startX = centerPoint.x - (totalWidth / 2);
                 const yOffset = 70;
-            
+               
                 clusterGroup.forEach((event, i) => {
                     const xPos = startX + (i * (pinWidth + pinPadding)) + (pinWidth / 2);
                     const yPos = centerPoint.y + yOffset;
                     const newLatLng = map.layerPointToLatLng(L.point(xPos, yPos));
-            
+               
                     const leg = L.polyline([centerLatLng, centerLatLng], { className: 'spider-leg', weight: 1.5 });
                     spiderfyLayer.addLayer(leg);
                     const marker = event.marker;
@@ -679,26 +664,26 @@
                         leg.setLatLngs([centerLatLng, newLatLng]);
                     }, 10);
                 });
-            
+               
                 spiderfyLayer.on('mouseover', cancelUnspiderfy).on('mouseout', scheduleUnspiderfy);
             }
 
             function unspiderfy() {
                 markerLayer.eachLayer(layer => { if (layer._icon) L.DomUtil.removeClass(layer._icon, 'marker-faded'); });
                 if (!currentSpiderfiedCluster) return;
-                
+               
                 const clusterToRestore = currentSpiderfiedCluster;
                 const centerLatLng = clusterToRestore.getLatLng();
                 spiderfyLayer.off();
                 currentSpiderfiedCluster = null;
-                
+               
                 const layersToRemove = [];
                 spiderfyLayer.eachLayer(layer => {
                     layersToRemove.push(layer);
                     if (layer instanceof L.Marker) layer.setLatLng(centerLatLng).setOpacity(0);
                     else if (layer instanceof L.Polyline) layer.setLatLngs([layer.getLatLngs()[0], centerLatLng]);
                 });
-                
+               
                 setTimeout(() => {
                     layersToRemove.forEach(layer => spiderfyLayer.removeLayer(layer));
                     if (!markerLayer.hasLayer(clusterToRestore)) markerLayer.addLayer(clusterToRestore);
@@ -711,8 +696,7 @@
                 loadingOverlay.style.opacity = '1';
                 loadingOverlay.style.display = "flex";
                 currentEvents = allEvents.filter((e) => e.date === selectedDate);
-                
-                // NEW: Update the event count display
+               
                 const count = currentEvents.length;
                 const bandText = count === 1 ? "Band" : "Bands";
                 eventCountDisplay.textContent = `${count} ${bandText} Tonight`;
@@ -770,7 +754,7 @@
             }
 
             function refitMap() {
-                map.invalidateSize(); // Tell Leaflet to re-check the container size
+                map.invalidateSize();
                 if (currentSpiderfiedCluster) return;
                 if (markerLayer.getLayers().length > 0) {
                     map.fitBounds(markerLayer.getBounds(), {
@@ -780,11 +764,11 @@
                     });
                 }
             }
-            
+           
             window.addEventListener('resize', debounce(refitMap, 250));
             map.on('zoomend', () => { unspiderfy(); if(currentEvents.length > 0) clusterAndDisplay(currentEvents.filter(e => e.coords && e.marker)); });
             map.on('click', unspiderfy);
-            
+           
             async function fetchAndProcessData() {
                 loadingOverlay.style.display = "flex";
                 try {
