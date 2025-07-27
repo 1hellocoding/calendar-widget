@@ -200,43 +200,55 @@
         }
         .day.today { border: 2px solid #3b82f6; }
         
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(249, 249, 249, 0.85);
-            backdrop-filter: blur(5px);
-            z-index: 20000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            user-select: none;
-        }
-        
-        .loading-image-container {
-            position: relative;
-            width: 500px;
-            height: 500px;
-            margin-bottom: 25px;
-        }
-        
-        .loading-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-            animation: spin 3s linear infinite;
-            filter: 
-                drop-shadow(1px 1px 0px rgba(0,0,0,0.4))
-                drop-shadow(2px 2px 0px rgba(0,0,0,0.3))
-                drop-shadow(3px 3px 0px rgba(0,0,0,0.2))
-                drop-shadow(4px 4px 0px rgba(0,0,0,0.1))
-                drop-shadow(5px 5px 3px rgba(0,0,0,0.2));
-        }
+        @keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+#loadingOverlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(249, 249, 249, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 20000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    user-select: none;
+}
+
+.loading-image-container {
+    position: relative;
+    width: 1000px;
+    height: 500px;
+    margin-bottom: 25px;
+    filter: drop-shadow(2px 0 0 white) drop-shadow(-2px 0 0 white) drop-shadow(0 2px 0 white) drop-shadow(0 -2px 0 white);
+    -webkit-mask-image: url('https://i.imghippo.com/files/ofc9438IXE.png');
+    mask-image: url('https://i.imghippo.com/files/ofc9438IXE.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+.loading-image-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
+    transform: translateX(-100%);
+    animation: shimmer 2.5s infinite linear;
+}
+
+.loading-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
 
         .loading-text {
             font-size: 1.5em;
