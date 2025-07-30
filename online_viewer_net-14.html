@@ -440,6 +440,8 @@
         'use strict';
         const startApp = () => {
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzyOvGKB3fCxnLjqAwr7xdfZsDDm7btXQzLLIY5VkTQqHgbHyBswGjInd0CrJ6w0XXSKA/exec';
+            // ⬇️ *** PASTE YOUR GOOGLE SHEET CSV LINK HERE ***
+            const IMAGE_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRaeCIG4k0nRJAk-IQJRWr9OzkaKEVEWon5mdULnGEPhhW1AHzVo4oXB6eEuGvRRVSglpWg4em18Ri0/pub?gid=1107946029&single=true&output=csv'; 
             const DEFAULT_BAND_PICTURE = "https://i.postimg.cc/X7Rc0MNC/temp-Image-Xyc3fg.avif";
 
             const loadingOverlay = document.getElementById("loadingOverlay");
@@ -450,7 +452,6 @@
             const eventCountDisplay = document.getElementById("event-count-display");
             let allEvents = [], currentEvents = [], selectedDate = null, currentYear, currentMonth;
             
-            // New variables for the counter animation
             let lastEventCount = 0;
             let animationTimeout = null;
             
@@ -544,7 +545,6 @@
                 return `${month}/${day}/${year}`;
             }
 
-            // This function displays events on the map. It now assumes coordinates are already loaded.
             function showEventsOnMap(eventMatches) {
                 unspiderfy();
                 markerLayer.clearLayers();
@@ -552,7 +552,7 @@
 
                 for (const event of eventMatches) {
                     if (event.coords) {
-                        event.marker = createEventMarker(event, false); // isImprecise is always false now
+                        event.marker = createEventMarker(event, false);
                         successfulEvents.push(event);
                     } else {
                         console.error(`Event "${event.name}" is missing coordinates.`);
@@ -591,8 +591,11 @@
                 
                 const impreciseNotice = isImprecise ? `<div class="imprecise-notice">📍 Location is approximate (town center)</div>` : "";
                 const confirmationNotice = `<div class="popup-confirmation-notice">📍Please confirm all gig dates and times</div>`;
+                
+                // ✨ NEW: Use the matched image URL from the event object
+                const imageUrl = event.imageUrl || DEFAULT_BAND_PICTURE;
 
-                const popupContent = `<img src="${DEFAULT_BAND_PICTURE}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<div class="custom-popup-info">${timeFormatted ? `<div>${timeFormatted}</div>` : ""}${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}<div>${event.venue ? `${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}` : ""}</div><div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>${event.phone ? `<div>${event.phone}</div>` : ""} ${impreciseNotice} ${confirmationNotice}</div>`;
+                const popupContent = `<img src="${imageUrl}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<div class="custom-popup-info">${timeFormatted ? `<div>${timeFormatted}</div>` : ""}${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}<div>${event.venue ? `${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}` : ""}</div><div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>${event.phone ? `<div>${event.phone}</div>` : ""} ${impreciseNotice} ${confirmationNotice}</div>`;
                 const marker = L.marker(event.coords, { icon: singlePinIcon });
                 marker.on("mouseover", function() {
                     if (this._icon && L.DomUtil.hasClass(this._icon, 'marker-faded')) return;
@@ -684,60 +687,42 @@
             }
 
             function animateEventCount(newCount) {
-                clearTimeout(animationTimeout); // Stop any ongoing animation
-
+                clearTimeout(animationTimeout); 
                 let currentDisplayCount = lastEventCount;
 
                 const animateDown = () => {
-                    // Stop condition for countdown
                     if (currentDisplayCount <= 0) {
-                        currentDisplayCount = 0; // Ensure it's exactly 0
+                        currentDisplayCount = 0;
                         eventCountDisplay.textContent = `0 Bands Tonight`;
-                        animateUp(); // Chain to the next animation
+                        animateUp(); 
                         return;
                     }
-
-                    // Decrement and update display
                     currentDisplayCount--;
                     const bandText = currentDisplayCount === 1 ? "Band" : "Bands";
                     eventCountDisplay.textContent = `${currentDisplayCount} ${bandText} Tonight`;
-
-                    // Calculate next step time for a smooth, quick animation
                     const downDuration = 150;
                     const stepTime = lastEventCount > 0 ? downDuration / lastEventCount : downDuration;
-
-                    // Schedule next step
                     animationTimeout = setTimeout(animateDown, stepTime);
                 };
 
                 const animateUp = () => {
-                    // Handle the case where the new count is 0
                     if (newCount === 0) {
                         eventCountDisplay.textContent = `0 Bands Tonight`;
                         lastEventCount = 0;
                         return;
                     }
-
-                    // Stop condition for countup
                     if (currentDisplayCount >= newCount) {
-                        lastEventCount = newCount; // Update the state for the next run
+                        lastEventCount = newCount;
                         return;
                     }
-
-                    // Increment and update display
                     currentDisplayCount++;
                     const bandText = currentDisplayCount === 1 ? "Band" : "Bands";
                     eventCountDisplay.textContent = `${currentDisplayCount} ${bandText} Tonight`;
-
-                    // Calculate next step time
                     const upDuration = 250;
                     const stepTime = newCount > 0 ? upDuration / newCount : upDuration;
-
-                    // Schedule next step
                     animationTimeout = setTimeout(animateUp, stepTime);
                 };
 
-                // Start the animation sequence
                 if (lastEventCount > 0) {
                     animateDown();
                 } else {
@@ -755,7 +740,6 @@
                 const count = currentEvents.length;
                 animateEventCount(count);
 
-                // This function call is now fast because it doesn't do any geocoding.
                 showEventsOnMap(currentEvents); 
 
                 loadingOverlay.style.transition = 'opacity 0.5s ease';
@@ -821,13 +805,54 @@
                 }
             }
             
+            // ✨ NEW: Function to find the best image match for an event name
+            function findBestImage(eventName, imageMap) {
+                if (!eventName) return DEFAULT_BAND_PICTURE;
+                const lowerCaseEventName = eventName.toLowerCase();
+                let bestMatchUrl = DEFAULT_BAND_PICTURE;
+                let longestMatchLength = 0;
+
+                // Iterate through the image map to find the best (longest) match
+                for (const [bandName, imageUrl] of imageMap.entries()) {
+                    // bandName is already lowercase from when we created the map
+                    if (lowerCaseEventName.includes(bandName) && bandName.length > longestMatchLength) {
+                        bestMatchUrl = imageUrl;
+                        longestMatchLength = bandName.length;
+                    }
+                }
+                return bestMatchUrl;
+            }
+
+            // ✨ UPDATED: Function now fetches both event and image data
             async function fetchAndProcessData() {
                 loadingOverlay.style.display = "flex";
                 try {
-                    const response = await fetch(WEB_APP_URL);
-                    const result = await response.json();
+                    // Fetch both data sources at the same time
+                    const [eventResponse, imageResponse] = await Promise.all([
+                        fetch(WEB_APP_URL),
+                        fetch(IMAGE_DATA_URL)
+                    ]);
+
+                    // Process image data first to create the lookup map
+                    const imageCsvText = await imageResponse.text();
+                    const imageMap = new Map();
+                    // Parse the CSV text. Skips the header row (.slice(1))
+                    imageCsvText.split(/\r?\n/).slice(1).forEach(row => {
+                        const columns = row.split(','); // Assumes simple CSV: Image URL,Text,Website
+                        if (columns.length >= 2 && columns[0] && columns[1]) {
+                            const imageUrl = columns[0].trim();
+                            const text = columns[1].trim().toLowerCase();
+                            if (text) {
+                                imageMap.set(text, imageUrl);
+                            }
+                        }
+                    });
+
+                    // Process event data
+                    const result = await eventResponse.json();
                     if (result.error) throw new Error(result.error);
                     
+                    // Map event data, find the image for each one, and ensure coordinates are valid
                     allEvents = result.data.map(row => ({
                         name:      row.name || "",
                         address:   row.address || "",
@@ -841,8 +866,10 @@
                         coords: {
                             lat: parseFloat(row.lat),
                             lng: parseFloat(row.lng)
-                        }
-                    })).filter(e => e.coords && e.coords.lat && e.coords.lng);
+                        },
+                        // Add the matched image URL to the event object
+                        imageUrl: findBestImage(row.name, imageMap) 
+                    })).filter(e => e.coords && !isNaN(e.coords.lat) && !isNaN(e.coords.lng));
 
                     const today = new Date();
                     currentYear = today.getFullYear();
@@ -851,8 +878,9 @@
                     setupNavigation();
                     const todaysDateString = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
                     await loadEventsForDate(todaysDateString);
+
                 } catch (error) {
-                    console.error("Error fetching data from web app:", error);
+                    console.error("Error fetching or processing data:", error);
                     const loadingText = document.querySelector('#loadingOverlay .loading-text');
                     if (loadingText) {
                         loadingText.textContent = "Failed to load event data.";
