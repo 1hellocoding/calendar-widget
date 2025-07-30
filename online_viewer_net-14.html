@@ -121,6 +121,14 @@
             border-top: 1px solid #eee;
             padding-top: 5px;
         }
+        .popup-confirmation-notice {
+            font-style: italic;
+            font-size: 11px;
+            color: #555;
+            margin-top: 8px;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+        }
         .custom-popup-tip-container {
             position: absolute;
             left: 50%;
@@ -569,8 +577,9 @@
                 if (event.website) eventNameHtml = `<a href="${event.website}" target="_blank">${eventNameHtml}</a>`;
                 
                 const impreciseNotice = isImprecise ? `<div class="imprecise-notice">📍 Location is approximate (town center)</div>` : "";
+                const confirmationNotice = `<div class="popup-confirmation-notice">📍Please confirm all gig dates and times</div>`;
 
-                const popupContent = `<img src="${DEFAULT_BAND_PICTURE}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<div class="custom-popup-info">${timeFormatted ? `<div>${timeFormatted}</div>` : ""}${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}<div>${event.venue ? `${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}` : ""}</div><div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>${event.phone ? `<div>${event.phone}</div>` : ""} ${impreciseNotice}</div>`;
+                const popupContent = `<img src="${DEFAULT_BAND_PICTURE}" alt="${event.name}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${DEFAULT_BAND_PICTURE}';">${eventNameHtml}<div class="custom-popup-info">${timeFormatted ? `<div>${timeFormatted}</div>` : ""}${event.date ? `<div>${formatDateForDisplay(event.date)}</div>` : ""}<div>${event.venue ? `${event.venueLink ? `<a href="${event.venueLink}" target="_blank">${event.venue}</a>` : event.venue}` : ""}</div><div>${event.mapLink ? `<a href="${event.mapLink}" target="_blank">${event.address}</a>` : event.address}</div>${event.phone ? `<div>${event.phone}</div>` : ""} ${impreciseNotice} ${confirmationNotice}</div>`;
                 const marker = L.marker(event.coords, { icon: singlePinIcon });
                 marker.on("mouseover", function() {
                     if (this._icon && L.DomUtil.hasClass(this._icon, 'marker-faded')) return;
